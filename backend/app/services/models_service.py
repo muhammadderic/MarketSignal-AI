@@ -15,7 +15,9 @@ class ModelsService:
                 id=model.id,
                 object=model.object,
                 created=model.created,
-                owned_by=model.owned_by
+                owned_by=model.owned_by,
+                active=getattr(model, "active", True),
+                context_window=getattr(model, "context_window", None),
             )
             models.append(model_info)
         
