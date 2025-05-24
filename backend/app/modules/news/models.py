@@ -1,0 +1,33 @@
+from datetime import datetime
+from sqlalchemy import DateTime, String, func, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.core.database import Base
+
+
+class NewsArticleData(Base):
+    """Stores raw news article metadata harvested from RSS feeds."""
+    
+    __tablename__ = "news_article_data"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    title: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    source: Mapped[str] = mapped_column(String(100), nullable=False)
+    published_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    link: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    
+    created_at: Mapped[datetime] = mapped_column(
+        server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(), 
+        onupdate=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint("title", "source", "published_at", name="uq_news_article_identity"),
+    )
+    
+    def __repr__(self) -> str:
+        return f"<NewsArticleData(id={self.id}, source='{self.source}', published_at='{self.published_at}')>"
