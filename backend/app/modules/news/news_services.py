@@ -29,7 +29,7 @@ class NewsService:
         feed_title, formatted_update_date = self.client.get_feed_global_info(feed_data)
         
         # 3. Filter recent news (starting from feed's updated date)
-        filtered_articles, end_date, start_date = self.client.filter_recent_news(
+        filtered_articles, start_date, end_date = self.client.filter_recent_news(
             feed_entries=feed_data.get("entries", []),
             # start_date=formatted_update_date, // TEST: just for get 1 day data list
             with_link=True

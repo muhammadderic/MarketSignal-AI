@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query
+
 from app.modules.news.dependencies import get_news_service
 from app.modules.news.news_services import NewsService
 from app.modules.news.news_schemas import NewsFeedResponse

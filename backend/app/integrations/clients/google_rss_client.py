@@ -1,11 +1,10 @@
 import feedparser
 import time
 import logging
+from fastapi import HTTPException, status
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Tuple, Dict, Any
-from fastapi import HTTPException, status
 
-# Use Python's built-in logger
 logger = logging.getLogger(__name__)
 
 
@@ -153,4 +152,4 @@ class GoogleRSSClient:
         logger.debug(f"Start Datetime: {start_date.strftime(self.SQLITE_FORMAT)} UTC")
         logger.info(f"Total News    : {len(filtered_articles)} articles found within this window.")
 
-        return filtered_articles, end_date, start_date
+        return filtered_articles, start_date, end_date
