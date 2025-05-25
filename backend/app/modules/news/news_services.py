@@ -5,7 +5,7 @@ from typing import List, Tuple, Dict, Any, Optional
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
 from app.modules.news.news_schemas import NewsFeedResponse, NewsArticleData
-from app.modules.news.news_utils import parse_input_date
+from app.modules.news.news_utils import parse_input_date, extract_original_url
 from app.modules.news.news_constants import SQLITE_FORMAT
 
 logger = logging.getLogger(__name__)
@@ -107,26 +107,30 @@ class NewsService:
 
         # 2. Iterate and screen the article elements
         for entry in feed_entries:
+            # 2.1. Extract published timestamp from feed entry
             pub_tuple = entry.get('published_parsed')
             if not pub_tuple:
                 continue
 
-            # Convert time.struct_time to naive UTC datetime
+            # 2.2. Convert time.struct_time to naive UTC datetime
             article_time = datetime(*pub_tuple[:6])
 
-            # Check if the article falls within the timeline threshold
+            # 2.3. Check if the article falls within the timeline threshold
             if start_date <= article_time <= end_date:
+                # 2.3.1. Extract source name from feed entry metadata
                 source_name = entry.source.get('title', 'Unknown Source') if 'source' in entry else 'Unknown Source'
 
-                # Construct core data payload with SQLite-aligned standard string
+                # 2.3.2. Construct core data payload with SQLite-aligned standard string
                 article_data = {
                     "title": entry.get('title', None),
                     "source": source_name,
                     "published_at": article_time.strftime(SQLITE_FORMAT)
                 }
 
+                # 2.3.3. Include and extract original article URL if requested
                 if with_link:
-                    article_data["link"] = entry.get('link', None)
+                    raw_link = entry.get('link', None)
+                    article_data["link"] = extract_original_url(raw_link) if raw_link else None
 
                 filtered_articles.append(article_data)
 

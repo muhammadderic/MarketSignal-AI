@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional, Union
+from urllib.parse import parse_qs, urlparse
 
 from app.modules.news.news_constants import SQLITE_FORMAT
 
@@ -24,3 +25,13 @@ def parse_input_date(
     if isinstance(val, datetime) and val.tzinfo is not None:
         return val.astimezone(timezone.utc).replace(tzinfo=None)
     return val
+
+
+def extract_original_url(google_news_link: str) -> str:
+    """
+    Extract the original article URL from Google News redirect link.
+    """
+    parsed = urlparse(google_news_link)
+    params = parse_qs(parsed.query)
+    return params.get('url', [google_news_link])[0]
+    
