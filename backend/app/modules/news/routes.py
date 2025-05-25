@@ -11,7 +11,7 @@ router = APIRouter(prefix="/news")
     "/business",
     response_model=NewsFeedResponse
 )
-async def get_business_news(
+def get_business_news(
     loc: str = Query(
         "ID",
         description="Locale code for news region (e.g., ID, US)",

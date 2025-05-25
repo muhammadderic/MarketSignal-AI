@@ -1,9 +1,17 @@
+import time
+import logging
+from datetime import datetime, timedelta, timezone
+from typing import List, Tuple, Dict, Any, Optional
+
 from app.integrations.clients.google_rss_client import GoogleRSSClient
 from app.modules.news.news_schemas import NewsFeedResponse, NewsArticleData
 
+logger = logging.getLogger(__name__)
 
 class NewsService:
     """Service for news-related operations"""
+
+    SQLITE_FORMAT = "%Y-%m-%d %H:%M:%S"
     
     def __init__(self, client: GoogleRSSClient):
         self.client = client
@@ -26,10 +34,10 @@ class NewsService:
         feed_data = self.client.fetch_feed()
         
         # 2. Extract global feed info
-        feed_title, formatted_update_date = self.client.get_feed_global_info(feed_data)
+        feed_title, formatted_update_date = self._get_feed_global_info(feed_data)
         
         # 3. Filter recent news (starting from feed's updated date)
-        filtered_articles, start_date, end_date = self.client.filter_recent_news(
+        filtered_articles, start_date, end_date = self._filter_recent_news(
             feed_entries=feed_data.get("entries", []),
             # start_date=formatted_update_date, // TEST: just for get 1 day data list
             with_link=True
@@ -47,3 +55,93 @@ class NewsService:
             articles=articles_schema,
             total_count=len(articles_schema)
         )
+
+    def _get_feed_global_info(self, feed_data: Dict[str, Any]) -> Tuple[str, Optional[str]]:
+        """
+        Extract global feed information.
+        
+        Args:
+            feed_data: Parsed feed data from fetch_feed()
+            
+        Returns:
+            Tuple[str, Optional[str]]: (feed_title, formatted_update_date)
+        """
+        feed_metadata = feed_data.get("feed", {})
+        
+        feed_title = feed_metadata.get('title', 'Unknown Feed Title')
+        updated_tuple = feed_metadata.get('updated_parsed')
+        
+        if updated_tuple:
+            formatted_update_date = time.strftime(self.SQLITE_FORMAT, updated_tuple)
+        else:
+            formatted_update_date = None
+        
+        return feed_title, formatted_update_date
+
+    def _filter_recent_news(
+        self,
+        feed_entries: List[Any],
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        with_link: bool = True
+    ) -> Tuple[List[Dict[str, Any]], datetime, datetime]:
+        """
+        Filters Google News feed entries within a precise time window.
+
+        Args:
+            feed_entries: List of feed entries from parsed feed.
+            start_date: Start boundary (datetime or 'YYYY-MM-DD HH:MM:SS'). Defaults to 24h ago.
+            end_date: End boundary (datetime or 'YYYY-MM-DD HH:MM:SS'). Defaults to right now.
+            with_link: Whether to include the article URL link in the output payload.
+
+        Returns:
+            Tuple[List[Dict[str, Any]], datetime]: (filtered_articles list, end_date datetime)
+        """
+        # Helper parser for incoming string or datetime arguments
+        def parse_input_date(val, default_val):
+            if val is None:
+                return default_val
+            if isinstance(val, str):
+                return datetime.strptime(val, self.SQLITE_FORMAT)
+            if isinstance(val, datetime) and val.tzinfo is not None:
+                return val.astimezone(timezone.utc).replace(tzinfo=None)
+            return val
+
+        # 1. Establish naive UTC datetime boundaries for fast comparison
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        
+        end_date = parse_input_date(end_date, now)
+        start_date = parse_input_date(start_date, end_date - timedelta(days=1))
+
+        filtered_articles = []
+
+        # 2. Iterate and screen the article elements
+        for entry in feed_entries:
+            pub_tuple = entry.get('published_parsed')
+            if not pub_tuple:
+                continue
+
+            # Convert time.struct_time to naive UTC datetime
+            article_time = datetime(*pub_tuple[:6])
+
+            # Check if the article falls within the timeline threshold
+            if start_date <= article_time <= end_date:
+                source_name = entry.source.get('title', 'Unknown Source') if 'source' in entry else 'Unknown Source'
+
+                # Construct core data payload with SQLite-aligned standard string
+                article_data = {
+                    "title": entry.get('title', None),
+                    "source": source_name,
+                    "published_at": article_time.strftime(self.SQLITE_FORMAT)
+                }
+
+                if with_link:
+                    article_data["link"] = entry.get('link', None)
+
+                filtered_articles.append(article_data)
+
+        logger.debug(f"End Datetime  : {end_date.strftime(self.SQLITE_FORMAT)} UTC")
+        logger.debug(f"Start Datetime: {start_date.strftime(self.SQLITE_FORMAT)} UTC")
+        logger.info(f"Total News    : {len(filtered_articles)} articles found within this window.")
+
+        return filtered_articles, start_date, end_date
