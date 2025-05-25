@@ -14,6 +14,12 @@ class BatchTitleRequest(BaseModel):
 
 class ScoringResult(BaseModel):
     cleaned_title: str
-    relevance_score: int = Field(..., description="Score from 1 to 10")
-    reason: str
+    relevance_score: int = Field(
+        ..., 
+        description="Score from 1 to 5"
+    )
+    reason: str = Field(
+        ..., 
+        description="Detailed explanation and reasoning from the LLM justifying the assigned relevance score."
+    )
     
