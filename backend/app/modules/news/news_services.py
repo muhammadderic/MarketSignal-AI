@@ -5,14 +5,14 @@ from typing import List, Tuple, Dict, Any, Optional
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
 from app.modules.news.news_schemas import NewsFeedResponse, NewsArticleData
+from app.modules.news.news_utils import parse_input_date
+from app.modules.news.news_constants import SQLITE_FORMAT
 
 logger = logging.getLogger(__name__)
 
 class NewsService:
     """Service for news-related operations"""
 
-    SQLITE_FORMAT = "%Y-%m-%d %H:%M:%S"
-    
     def __init__(self, client: GoogleRSSClient):
         self.client = client
     
@@ -72,7 +72,7 @@ class NewsService:
         updated_tuple = feed_metadata.get('updated_parsed')
         
         if updated_tuple:
-            formatted_update_date = time.strftime(self.SQLITE_FORMAT, updated_tuple)
+            formatted_update_date = time.strftime(SQLITE_FORMAT, updated_tuple)
         else:
             formatted_update_date = None
         
@@ -97,16 +97,6 @@ class NewsService:
         Returns:
             Tuple[List[Dict[str, Any]], datetime]: (filtered_articles list, end_date datetime)
         """
-        # Helper parser for incoming string or datetime arguments
-        def parse_input_date(val, default_val):
-            if val is None:
-                return default_val
-            if isinstance(val, str):
-                return datetime.strptime(val, self.SQLITE_FORMAT)
-            if isinstance(val, datetime) and val.tzinfo is not None:
-                return val.astimezone(timezone.utc).replace(tzinfo=None)
-            return val
-
         # 1. Establish naive UTC datetime boundaries for fast comparison
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         
@@ -132,7 +122,7 @@ class NewsService:
                 article_data = {
                     "title": entry.get('title', None),
                     "source": source_name,
-                    "published_at": article_time.strftime(self.SQLITE_FORMAT)
+                    "published_at": article_time.strftime(SQLITE_FORMAT)
                 }
 
                 if with_link:
@@ -140,8 +130,14 @@ class NewsService:
 
                 filtered_articles.append(article_data)
 
-        logger.debug(f"End Datetime  : {end_date.strftime(self.SQLITE_FORMAT)} UTC")
-        logger.debug(f"Start Datetime: {start_date.strftime(self.SQLITE_FORMAT)} UTC")
+        # 3. Sorting articles by Published Date
+        filtered_articles.sort(
+            key=lambda x: datetime.strptime(x["published_at"], SQLITE_FORMAT),
+            reverse=True  # Newest first
+        )
+
+        logger.debug(f"End Datetime  : {end_date.strftime(SQLITE_FORMAT)} UTC")
+        logger.debug(f"Start Datetime: {start_date.strftime(SQLITE_FORMAT)} UTC")
         logger.info(f"Total News    : {len(filtered_articles)} articles found within this window.")
 
         return filtered_articles, start_date, end_date
