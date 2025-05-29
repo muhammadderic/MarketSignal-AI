@@ -1,7 +1,7 @@
 import time
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import List, Tuple, Dict, Any, Optional
+from typing import Tuple, Dict, Any, Optional
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
 from app.modules.news.news_schemas import NewsFeedResponse, NewsArticleData
@@ -80,11 +80,11 @@ class NewsService:
 
     def _filter_recent_news(
         self,
-        feed_entries: List[Any],
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        feed_entries: list[dict[str, Any]],
+        start_date: str | datetime | None = None,
+        end_date: str | datetime | None = None,
         with_link: bool = True
-    ) -> Tuple[List[Dict[str, Any]], datetime, datetime]:
+    ) -> tuple[list[dict[str, str | None]], datetime, datetime]:
         """
         Filters Google News feed entries within a precise time window.
 
@@ -95,7 +95,7 @@ class NewsService:
             with_link: Whether to include the article URL link in the output payload.
 
         Returns:
-            Tuple[List[Dict[str, Any]], datetime]: (filtered_articles list, end_date datetime)
+            tuple[list[dict[str, str | None]], datetime, datetime]: (filtered_articles list, start_date datetime, end_date datetime)
         """
         # 1. Establish naive UTC datetime boundaries for fast comparison
         now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -103,7 +103,7 @@ class NewsService:
         end_date = parse_input_date(end_date, now)
         start_date = parse_input_date(start_date, end_date - timedelta(days=1))
 
-        filtered_articles = []
+        filtered_articles: list[dict[str, str | None]] = []
 
         # 2. Iterate and screen the article elements
         for entry in feed_entries:
