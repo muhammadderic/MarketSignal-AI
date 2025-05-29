@@ -3,6 +3,7 @@ from sqlalchemy import DateTime, String, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.modules.news.news_constants import ArticleLocale
 
 
 class NewsArticleData(Base):
@@ -16,6 +17,12 @@ class NewsArticleData(Base):
     source: Mapped[str] = mapped_column(String(100), nullable=False)
     published_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
     link: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    locale: Mapped[ArticleLocale] = mapped_column(
+        String(10), 
+        default=ArticleLocale.UNASSIGNED, 
+        nullable=False, 
+        index=True
+    )
     
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now()
@@ -26,7 +33,7 @@ class NewsArticleData(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("title", "source", "published_at", name="uq_news_article_identity"),
+        UniqueConstraint("title", "source", "published_at", "locale", name="uq_news_article_identity"),
     )
     
     def __repr__(self) -> str:

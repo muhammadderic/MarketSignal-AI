@@ -1,8 +1,10 @@
+from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import List
+
+from app.modules.news.news_constants import ArticleLocale
 
 
-class NewsArticleData(BaseModel):
+class NewsArticle(BaseModel):
     """Schema for individual news article data"""
     title: str | None = Field(
         default=None,
@@ -12,7 +14,7 @@ class NewsArticleData(BaseModel):
         ...,
         description="News source name"
     )
-    published_at: str = Field(
+    published_at: datetime = Field(
         ...,
         description="Article publication timestamp in SQLite format (YYYY-MM-DD HH:MM:SS)"
     )
@@ -20,19 +22,15 @@ class NewsArticleData(BaseModel):
         default=None,
         description="URL link to the full article"
     )
+    locale: ArticleLocale = Field(
+        default=ArticleLocale.UNASSIGNED,
+        description="Target locale/country code for the news article (e.g., 'ID', 'US')"
+    )
 
 
 class NewsFeedResponse(BaseModel):
     """Response schema for news feed data"""
-    feed_title: str = Field(
-        ...,
-        description="Title of the RSS feed"
-    )
-    formatted_update_date: str | None = Field(
-        default=None,
-        description="Feed last updated timestamp in SQLite format (YYYY-MM-DD HH:MM:SS)"
-    )
-    articles: List[NewsArticleData] = Field(
+    articles: list[NewsArticle] = Field(
         default_factory=list,
         description="List of filtered news articles"
     )

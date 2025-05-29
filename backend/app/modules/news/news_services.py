@@ -1,101 +1,131 @@
-import time
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Tuple, Dict, Any, Optional
+from fastapi import HTTPException, status
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
-from app.modules.news.news_schemas import NewsFeedResponse, NewsArticleData
-from app.modules.news.news_utils import parse_input_date, extract_original_url
-from app.modules.news.news_constants import SQLITE_FORMAT
+from app.modules.news.news_schemas import NewsFeedResponse, NewsArticle
+from app.modules.news.news_utils import (
+    parse_input_date, 
+    extract_original_url,
+    is_data_fresh,
+    get_max_age_cutoff,
+    validate_locale
+)
+from app.modules.news.news_constants import SQLITE_FORMAT, ArticleLocale
+from app.modules.news.news_repo import NewsRepository
 
 logger = logging.getLogger(__name__)
 
 class NewsService:
     """Service for news-related operations"""
 
-    def __init__(self, client: GoogleRSSClient):
+    def __init__(
+        self, 
+        repo: NewsRepository,
+        client: GoogleRSSClient
+    ):
+        self.repo = repo
         self.client = client
     
     def get_business_news(self, locale: str = "ID") -> NewsFeedResponse:
         """
-        Fetch and filter business news from Google RSS feed.
+        Fetch and filter business news from Google RSS feed with caching strategy.
         
         Args:
             locale: Locale code (e.g., 'ID', 'US'). Defaults to 'ID'.
             
         Returns:
-            NewsFeedResponse: Filtered news feed response
+            NewsFeedResponse: Filtered news feed response containing articles payload.
         """
-        # Update client locale if different
-        if self.client.locale != locale:
-            self.client = GoogleRSSClient(locale=locale)
+        # 1. Validate locale
+        validated_locale = validate_locale(locale)
+        if validated_locale is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid or unsupported locale '{locale}'."
+            )
+
+        # 2. Evaluate cache fresh status against database threshold
+        # 2.1. Retrieve the timestamp of the most recent article in persistent storage
+        latest_data = self.repo.get_latest_published_at()
         
-        # 1. Fetch raw feed data
-        feed_data = self.client.fetch_feed()
-        
-        # 2. Extract global feed info
-        feed_title, formatted_update_date = self._get_feed_global_info(feed_data)
-        
-        # 3. Filter recent news (starting from feed's updated date)
-        filtered_articles, start_date, end_date = self._filter_recent_news(
-            feed_entries=feed_data.get("entries", []),
-            # start_date=formatted_update_date, // TEST: just for get 1 day data list
-            with_link=True
+        # 2.2. Validate data staleness based on configured maximum allowable age
+        data_freshness = is_data_fresh(
+            last_published_at=latest_data,
+            max_age_hours=5
         )
+
+        # 3. Pipeline routing based on cache freshness status
+        if data_freshness:
+            # 3a.1. Determine lookback cutoff timestamp for cached article retrieval
+            start_date = get_max_age_cutoff()
+
+            # 3a.2. Query persisted news articles within the active timeline boundary
+            filtered_articles = self.repo.get_articles_from_date(
+                start_date=start_date,
+                locale=validated_locale
+            )
+        else:
+            # 3b.1. Reconfigure RSS client instance if requested locale differs from active state
+            if self.client.locale != validated_locale:
+                self.client = GoogleRSSClient(locale=validated_locale)
+
+            # 3b.2. Harvest raw news payload from external Google RSS endpoint
+            feed_data = self.client.fetch_feed()
         
-        # 4. Convert to schema
+            # 3b.3. Screen feed entries published after the last database checkpoint
+            filtered_articles = self._filter_recent_news(
+                feed_entries=feed_data.get("entries", []),
+                locale=validated_locale,
+                start_date=latest_data,
+                with_link=True
+            )
+
+            # 3b.4. Extract raw dictionary payloads and execute bulk persistence with deduplication
+            article_dicts: list[dict[str, str | None]] = [
+                {
+                    "title": article["title"],
+                    "source": article["source"],
+                    "published_at": article["published_at"],
+                    "link": article["link"],
+                    "locale": article["locale"]
+                }
+                for article in filtered_articles
+            ]
+            self.repo.save_filtered_articles(article_dicts)
+
+        # 4. Transform filtered article payloads into Pydantic response models
         articles_schema = [
-            NewsArticleData(**article) for article in filtered_articles
+            NewsArticle(**(article._asdict() if hasattr(article, "_asdict") else article))
+            for article in filtered_articles
         ]
         
-        # 5. Build response
+        # 5. Construct and return final HTTP news feed response payload
         return NewsFeedResponse(
-            feed_title=feed_title,
-            formatted_update_date=formatted_update_date,
             articles=articles_schema,
             total_count=len(articles_schema)
         )
 
-    def _get_feed_global_info(self, feed_data: Dict[str, Any]) -> Tuple[str, Optional[str]]:
-        """
-        Extract global feed information.
-        
-        Args:
-            feed_data: Parsed feed data from fetch_feed()
-            
-        Returns:
-            Tuple[str, Optional[str]]: (feed_title, formatted_update_date)
-        """
-        feed_metadata = feed_data.get("feed", {})
-        
-        feed_title = feed_metadata.get('title', 'Unknown Feed Title')
-        updated_tuple = feed_metadata.get('updated_parsed')
-        
-        if updated_tuple:
-            formatted_update_date = time.strftime(SQLITE_FORMAT, updated_tuple)
-        else:
-            formatted_update_date = None
-        
-        return feed_title, formatted_update_date
-
     def _filter_recent_news(
         self,
-        feed_entries: list[dict[str, Any]],
+        feed_entries: list[dict[str, any]],
+        locale: ArticleLocale | str = ArticleLocale.ID,
         start_date: str | datetime | None = None,
         end_date: str | datetime | None = None,
         with_link: bool = True
-    ) -> tuple[list[dict[str, str | None]], datetime, datetime]:
+    ) -> list[dict[str, any]]:
         """
-        Filters Google News feed entries within a precise time window.
+        Filters Google News feed entries within a precise time window and attaches locale metadata.
 
         Args:
             feed_entries: List of feed entries from parsed feed.
+            locale: Target locale code or ArticleLocale Enum for the articles. Defaults to ArticleLocale.ID.
             start_date: Start boundary (datetime or 'YYYY-MM-DD HH:MM:SS'). Defaults to 24h ago.
             end_date: End boundary (datetime or 'YYYY-MM-DD HH:MM:SS'). Defaults to right now.
             with_link: Whether to include the article URL link in the output payload.
 
         Returns:
-            tuple[list[dict[str, str | None]], datetime, datetime]: (filtered_articles list, start_date datetime, end_date datetime)
+            list[dict[str, Any]]: Filtered article dictionaries containing native datetime objects for database compatibility.
         """
         # 1. Establish naive UTC datetime boundaries for fast comparison
         now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -103,7 +133,10 @@ class NewsService:
         end_date = parse_input_date(end_date, now)
         start_date = parse_input_date(start_date, end_date - timedelta(days=1))
 
-        filtered_articles: list[dict[str, str | None]] = []
+        # Resolve locale string representation if an Enum member was passed
+        locale_str = locale.value if isinstance(locale, ArticleLocale) else locale
+
+        filtered_articles: list[dict[str, any]] = []
 
         # 2. Iterate and screen the article elements
         for entry in feed_entries:
@@ -120,11 +153,12 @@ class NewsService:
                 # 2.3.1. Extract source name from feed entry metadata
                 source_name = entry.source.get('title', 'Unknown Source') if 'source' in entry else 'Unknown Source'
 
-                # 2.3.2. Construct core data payload with SQLite-aligned standard string
-                article_data = {
+                # 2.3.2. Construct core data payload with native datetime object for database compatibility
+                article_data: dict[str, any] = {
                     "title": entry.get('title', None),
                     "source": source_name,
-                    "published_at": article_time.strftime(SQLITE_FORMAT)
+                    "published_at": article_time,  # <--- UPDATED LINE 1
+                    "locale": locale_str,
                 }
 
                 # 2.3.3. Include and extract original article URL if requested
@@ -136,12 +170,13 @@ class NewsService:
 
         # 3. Sorting articles by Published Date
         filtered_articles.sort(
-            key=lambda x: datetime.strptime(x["published_at"], SQLITE_FORMAT),
+            key=lambda x: x["published_at"],  # <--- UPDATED LINE 2
             reverse=True  # Newest first
         )
 
+        logger.debug(f"Target Locale : {locale_str}")
         logger.debug(f"End Datetime  : {end_date.strftime(SQLITE_FORMAT)} UTC")
         logger.debug(f"Start Datetime: {start_date.strftime(SQLITE_FORMAT)} UTC")
         logger.info(f"Total News    : {len(filtered_articles)} articles found within this window.")
 
-        return filtered_articles, start_date, end_date
+        return filtered_articles
