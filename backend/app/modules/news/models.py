@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import DateTime, String, func, UniqueConstraint
+from sqlalchemy import DateTime, String, Text, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -23,6 +23,10 @@ class NewsArticleData(Base):
         nullable=False, 
         index=True
     )
+
+    # LLM Financial Relevance Scoring
+    relevance_score: Mapped[int | None] = mapped_column(nullable=True, index=True)
+    relevance_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now()
@@ -33,7 +37,13 @@ class NewsArticleData(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("title", "source", "published_at", "locale", name="uq_news_article_identity"),
+        UniqueConstraint(
+            "title",
+            "source",
+            "published_at",
+            "locale",
+            name="uq_news_article_identity",
+        ),
     )
     
     def __repr__(self) -> str:
