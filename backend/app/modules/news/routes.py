@@ -12,7 +12,7 @@ router = APIRouter(prefix="/news")
     response_model=NewsFeedResponse
 )
 def get_business_news(
-    loc: str = Query(
+    locale: str = Query(
         "ID",
         description="Locale code for news region (e.g., ID, US)",
         pattern="^(ID|US)$"
@@ -23,9 +23,9 @@ def get_business_news(
     Get business news from Google RSS feed.
 
     Args:
-        loc: Locale code (ID or US). Defaults to ID (Indonesia).
+        locale: Locale code (ID or US). Defaults to ID (Indonesia).
 
     Returns:
         NewsFeedResponse: Filtered business news articles
     """
-    return service.get_business_news(locale=loc)
+    return service.get_business_news(locale)
