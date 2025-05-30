@@ -50,30 +50,21 @@ class NewsService:
         latest_data = self.repo.get_latest_published_at()
         
         # 2.2. Validate data staleness based on configured maximum allowable age
-        data_freshness = is_data_fresh(
+        is_fresh = is_data_fresh(
             last_published_at=latest_data,
             max_age_hours=5
         )
 
         # 3. Pipeline routing based on cache freshness status
-        if data_freshness:
-            # 3a.1. Determine lookback cutoff timestamp for cached article retrieval
-            start_date = get_max_age_cutoff()
-
-            # 3a.2. Query persisted news articles within the active timeline boundary
-            filtered_articles = self.repo.get_articles_from_date(
-                start_date=start_date,
-                locale=validated_locale
-            )
-        else:
-            # 3b.1. Reconfigure RSS client instance if requested locale differs from active state
+        if not is_fresh:
+            # 3.1. Reconfigure RSS client instance if requested locale differs from active state
             if self.client.locale != validated_locale:
                 self.client = GoogleRSSClient(locale=validated_locale)
 
-            # 3b.2. Harvest raw news payload from external Google RSS endpoint
+            # 3.2. Harvest raw news payload from external Google RSS endpoint
             feed_data = self.client.fetch_feed()
         
-            # 3b.3. Screen feed entries published after the last database checkpoint
+            # 3.3. Screen feed entries published after the last database checkpoint
             filtered_articles = self._filter_recent_news(
                 feed_entries=feed_data.get("entries", []),
                 locale=validated_locale,
@@ -81,26 +72,37 @@ class NewsService:
                 with_link=True
             )
 
-            # 3b.4. Extract raw dictionary payloads and execute bulk persistence with deduplication
+            # 3.4. Extract raw dictionary payloads and execute bulk persistence with deduplication
             article_dicts: list[dict[str, str | None]] = [
                 {
                     "title": article["title"],
                     "source": article["source"],
                     "published_at": article["published_at"],
                     "link": article["link"],
-                    "locale": article["locale"]
+                    "locale": article["locale"],
+                    "relevance_score": None,
+                    "relevance_reason": None,
                 }
                 for article in filtered_articles
             ]
             self.repo.save_filtered_articles(article_dicts)
+            
+        # 4. Determine lookback cutoff timestamp for cached article retrieval
+        start_date = get_max_age_cutoff()
 
-        # 4. Transform filtered article payloads into Pydantic response models
+        # 5. Query persisted news articles within the active timeline boundary
+        filtered_articles = self.repo.get_articles_from_date(
+            start_date=start_date,
+            locale=validated_locale
+        )
+
+        # 6. Transform filtered article payloads into Pydantic response models
         articles_schema = [
             NewsArticle(**(article._asdict() if hasattr(article, "_asdict") else article))
             for article in filtered_articles
         ]
         
-        # 5. Construct and return final HTTP news feed response payload
+        # 7. Construct and return final HTTP news feed response payload
         return NewsFeedResponse(
             articles=articles_schema,
             total_count=len(articles_schema)

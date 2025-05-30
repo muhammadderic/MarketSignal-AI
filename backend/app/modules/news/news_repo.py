@@ -8,6 +8,19 @@ from app.modules.news.models import NewsArticleData
 from app.modules.news.news_constants import ArticleLocale
 
 
+NewsArticleRecordRow = Row[
+    tuple[
+        int,
+        str | None,
+        str,
+        datetime,
+        str | None,
+        ArticleLocale,
+        int | None,
+        str | None,
+    ]
+]
+
 class NewsRepository:
     def __init__(self, db: Session):
         self.db = db
@@ -30,7 +43,7 @@ class NewsRepository:
         self,
         start_date: datetime,
         locale: ArticleLocale | str = ArticleLocale.ID
-    ) -> Sequence[Row[tuple[str | None, str, datetime, str | None, str]]]:
+    ) -> Sequence[NewsArticleRecordRow]:
         """
         Fetch all articles matching published_at >= start_date and target locale, newest first.
         
@@ -43,15 +56,18 @@ class NewsRepository:
         """
         stmt = (
             select(
+                NewsArticleData.id,
                 NewsArticleData.title,
                 NewsArticleData.source,
                 NewsArticleData.published_at,
                 NewsArticleData.link,
-                NewsArticleData.locale
+                NewsArticleData.locale,
+                NewsArticleData.relevance_score,
+                NewsArticleData.relevance_reason,
             )
             .where(
                 NewsArticleData.published_at >= start_date,
-                NewsArticleData.locale == locale
+                NewsArticleData.locale == locale,
             )
             .order_by(NewsArticleData.published_at.desc())
         )

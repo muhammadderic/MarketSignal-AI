@@ -25,8 +25,12 @@ class NewsArticleData(Base):
     )
 
     # LLM Financial Relevance Scoring
-    relevance_score: Mapped[int | None] = mapped_column(nullable=True, index=True)
-    relevance_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    relevance_score: Mapped[int | None] = mapped_column(
+        nullable=True, default=None, index=True
+    )
+    relevance_reason: Mapped[str | None] = mapped_column(
+        Text, nullable=True, default=None
+    )
     
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now()

@@ -6,6 +6,10 @@ from app.modules.news.news_constants import ArticleLocale
 
 class NewsArticle(BaseModel):
     """Schema for individual news article data"""
+    id: int = Field(
+        ..., 
+        description="Primary key identifier for the news article"
+    )
     title: str | None = Field(
         default=None,
         description="Article headline/title"
@@ -25,6 +29,12 @@ class NewsArticle(BaseModel):
     locale: ArticleLocale = Field(
         default=ArticleLocale.UNASSIGNED,
         description="Target locale/country code for the news article (e.g., 'ID', 'US')"
+    )
+    relevance_score: int | None = Field(
+        default=None, description="LLM relevance score from 1 to 5"
+    )
+    relevance_reason: str | None = Field(
+        default=None, description="LLM reasoning justifying the score"
     )
 
 
