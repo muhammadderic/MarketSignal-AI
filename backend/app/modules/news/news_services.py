@@ -157,7 +157,7 @@ class NewsService:
                 article_data: dict[str, any] = {
                     "title": entry.get('title', None),
                     "source": source_name,
-                    "published_at": article_time,  # <--- UPDATED LINE 1
+                    "published_at": article_time,
                     "locale": locale_str,
                 }
 
@@ -170,13 +170,10 @@ class NewsService:
 
         # 3. Sorting articles by Published Date
         filtered_articles.sort(
-            key=lambda x: x["published_at"],  # <--- UPDATED LINE 2
+            key=lambda x: x["published_at"],
             reverse=True  # Newest first
         )
 
-        logger.debug(f"Target Locale : {locale_str}")
-        logger.debug(f"End Datetime  : {end_date.strftime(SQLITE_FORMAT)} UTC")
-        logger.debug(f"Start Datetime: {start_date.strftime(SQLITE_FORMAT)} UTC")
         logger.info(f"Total News    : {len(filtered_articles)} articles found within this window.")
 
         return filtered_articles
