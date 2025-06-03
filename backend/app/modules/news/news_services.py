@@ -3,7 +3,11 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
-from app.modules.news.news_schemas import NewsFeedResponse, NewsArticle
+from app.modules.news.news_schemas import (
+    ArticleTitleData,
+    NewsFeedResponse, 
+    NewsArticle
+)
 from app.modules.news.news_utils import (
     parse_input_date, 
     extract_original_url,
@@ -11,7 +15,7 @@ from app.modules.news.news_utils import (
     get_max_age_cutoff,
     validate_locale
 )
-from app.modules.news.news_constants import SQLITE_FORMAT, ArticleLocale
+from app.modules.news.news_constants import ArticleLocale
 from app.modules.news.news_repo import NewsRepository
 
 logger = logging.getLogger(__name__)
@@ -107,6 +111,27 @@ class NewsService:
             articles=articles_schema,
             total_count=len(articles_schema)
         )
+
+    def get_titles_by_ids(self, article_ids: list[int]) -> list[ArticleTitleData]:
+        """
+        Retrieve article id-title pairs for the given IDs, skipping null titles.
+        
+        Args:
+            article_ids: List of article IDs to look up.
+            
+        Returns:
+            List of ArticleTitleData schemas for articles with non-null titles.
+        """
+        if not article_ids:
+            return []
+        
+        rows = self.repo.get_id_title_pairs_by_ids(article_ids)
+        
+        return [
+            ArticleTitleData(id=row.id, title=row.title)
+            for row in rows
+            if row.title is not None
+        ]
 
     def _filter_recent_news(
         self,

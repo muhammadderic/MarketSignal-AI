@@ -73,6 +73,29 @@ class NewsRepository:
         )
         return self.db.execute(stmt).all()
 
+    def get_id_title_pairs_by_ids(
+        self, 
+        article_ids: list[int]
+    ) -> Sequence[Row[tuple[int, str | None]]]:
+        """
+        Fetch (id, title) pairs for the given article IDs.
+        
+        Args:
+            article_ids: List of article IDs to fetch.
+            
+        Returns:
+            Sequence of rows with named access (.id, .title).
+            Missing IDs are excluded. Titles may be None.
+        """
+        if not article_ids:
+            return []
+        
+        stmt = (
+            select(NewsArticleData.id, NewsArticleData.title)
+            .where(NewsArticleData.id.in_(article_ids))
+        )
+        return self.db.execute(stmt).all()
+
     # === CREATE ===
     def save_filtered_articles(self, articles: list[dict[str, str | None]]) -> None:
         """
