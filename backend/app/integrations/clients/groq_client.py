@@ -2,9 +2,6 @@ import json
 from groq import Groq
 from dotenv import load_dotenv
 
-from app.modules.news.news_schemas import ArticleTitleData
-from app.modules.news_scoring.ns_schemas import BatchScoringResponse
-
 load_dotenv()
 
 
@@ -17,16 +14,13 @@ class GroqClient:
         
     async def score_titles(
         self, 
-        input_articles: list[ArticleTitleData],
+        input_articles: list[dict[int, str]],
         system_prompt: str
-    ) -> BatchScoringResponse:
+    ) -> str:
         """
         Evaluates a batch of news titles using Groq structured JSON outputs.
         """
-        # Serialize input objects cleanly
-        articles_payload = [article.model_dump() for article in input_articles]
-
-        chat_completion = self.client.chat.completions.parse(
+        chat_completion = self.client.chat.completions.create(
             messages=[
                 {
                     "role": "system", 
@@ -34,14 +28,13 @@ class GroqClient:
                 },
                 {
                     "role": "user", 
-                    "content": f"Score these articles: {json.dumps(articles_payload)}"
+                    "content": f"Score these articles: {json.dumps(input_articles)}"
                 },
             ],
-            model="llama-3.1-8b-instant",
-            response_format=BatchScoringResponse,
+            model="openai/gpt-oss-20b",
+            response_format={"type": "json_object"},
             temperature=0.0,
         )
         
-        # Returns the parsed Pydantic object directly
-        return chat_completion.choices[0].message.parsed
+        return chat_completion.choices[0].message.content
     

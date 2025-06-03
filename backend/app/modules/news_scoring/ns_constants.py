@@ -125,4 +125,7 @@ Rules:
 - Evaluate actual financial impact, not just keywords.
 - Stock moves require a catalyst to score above 2.
 - Do not speculate; if undecided between two scores, pick the lower one.
+
+Output Format:
+Return valid JSON matching this exact structure: {"results": [{"id": 101, "relevance_score": 4, "relevance_reason": "Brief title-specific explanation"}]}
 """

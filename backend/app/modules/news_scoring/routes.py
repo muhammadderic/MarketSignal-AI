@@ -2,9 +2,8 @@ from fastapi import APIRouter, status, Depends
 
 from app.modules.news_scoring.ns_schemas import (
     NewsScoreBatchRequest,
-    ScoringResult
+    BatchScoringResponse
 )
-from app.modules.news.news_schemas import ArticleTitleData
 from app.modules.orchestration.dependencies import get_news_scoring_orchestrator
 from app.modules.orchestration.news_scoring_orctr import NewsScoringOrchestrator
 
@@ -13,14 +12,13 @@ router = APIRouter(prefix="/news-scoring")
 
 @router.post(
     "/",
-    response_model=list[ArticleTitleData],
+    response_model=BatchScoringResponse,
     status_code=status.HTTP_200_OK
 )
-def scoring_news_titles(
+async def scoring_news_titles(
     payload: NewsScoreBatchRequest,
     orchestrator: NewsScoringOrchestrator = Depends(get_news_scoring_orchestrator)
-# ) -> list[ScoringResult]:
-) -> list[ArticleTitleData]:
+) -> BatchScoringResponse:
     """
     Scoring news titles.
 
@@ -28,4 +26,4 @@ def scoring_news_titles(
 
     Returns:
     """
-    return orchestrator.sync_and_get_news_scores(payload)
+    return await orchestrator.sync_and_get_news_scores(payload)
