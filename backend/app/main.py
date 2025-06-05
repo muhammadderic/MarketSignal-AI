@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 
-from app.api.router import router as scoring_routes
-from app.modules.news.routes import router as news_routes
-from app.modules.news_scoring.routes import router as news_scoring_routes
+from app.core.apis.v1 import basic_router
 
 app = FastAPI(
     title="MarketSignal AI", 
@@ -10,6 +8,4 @@ app = FastAPI(
 )
 
 # === ROUTES ===
-app.include_router(scoring_routes)
-app.include_router(news_routes)
-app.include_router(news_scoring_routes)
+app.include_router(basic_router)
