@@ -1,17 +1,11 @@
 import json
-from groq import Groq
-from dotenv import load_dotenv
-
-load_dotenv()
+from groq import AsyncGroq
 
 
-class GroqClient:
-    def __init__(
-        self, 
-        client: Groq
-    ):
-        self.client = client
-        
+class GroqClient:        
+    def __init__(self, api_key: str | None = None):
+        self.client = AsyncGroq(api_key=api_key)
+
     async def score_titles(
         self, 
         input_articles: list[dict[int, str]],
@@ -20,7 +14,7 @@ class GroqClient:
         """
         Evaluates a batch of news titles using Groq structured JSON outputs.
         """
-        chat_completion = self.client.chat.completions.create(
+        chat_completion = await self.client.chat.completions.create(
             messages=[
                 {
                     "role": "system", 
@@ -38,3 +32,7 @@ class GroqClient:
         
         return chat_completion.choices[0].message.content
     
+    async def list_available_models(self) -> list[any]:
+        """Fetch all available models from Groq API"""
+        models_response = await self.client.models.list()
+        return models_response.data

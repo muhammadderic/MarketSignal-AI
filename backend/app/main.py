@@ -1,6 +1,9 @@
 from fastapi import FastAPI
+from dotenv import load_dotenv
 
 from app.core.apis.v1 import basic_router
+
+load_dotenv()
 
 app = FastAPI(
     title="MarketSignal AI", 
