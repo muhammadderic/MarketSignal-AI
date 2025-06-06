@@ -175,19 +175,28 @@ class NewsService:
         """
         Filters Google News feed entries within a precise time window and attaches locale metadata.
 
+        All boundary and article datetimes are UTC-aware. Articles are stored
+        as `datetime(..., tzinfo=timezone.utc)`, which SQLAlchemy serializes
+        with an explicit `+00:00` offset when the column is declared as
+        `DateTime(timezone=True)`.
+
         Args:
             feed_entries: List of feed entries from parsed feed.
-            locale: Target locale code or ArticleLocale Enum for the articles. Defaults to ArticleLocale.ID.
-            start_date: Start boundary (datetime or 'YYYY-MM-DD HH:MM:SS'). Defaults to 24h ago.
-            end_date: End boundary (datetime or 'YYYY-MM-DD HH:MM:SS'). Defaults to right now.
-            with_link: Whether to include the article URL link in the output payload.
+            locale: Target locale code or ArticleLocale Enum for the articles.
+                Defaults to ArticleLocale.ID.
+            start_date: Start boundary (datetime or 'YYYY-MM-DD HH:MM:SS').
+                Defaults to 24h before `end_date`.
+            end_date: End boundary (datetime or 'YYYY-MM-DD HH:MM:SS').
+                Defaults to right now (UTC).
+            with_link: Whether to include the article URL link in the output.
 
         Returns:
-            list[dict[str, Any]]: Filtered article dictionaries containing native datetime objects for database compatibility.
+            list[dict[str, Any]]: Filtered article dictionaries containing
+            UTC-aware datetime objects for database compatibility.
         """
-        # 1. Establish naive UTC datetime boundaries for fast comparison
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
-        
+        # 1. Establish UTC-aware datetime boundaries
+        now = datetime.now(timezone.utc)
+
         end_date = parse_input_date(end_date, now)
         start_date = parse_input_date(start_date, end_date - timedelta(days=1))
 
@@ -203,8 +212,8 @@ class NewsService:
             if not pub_tuple:
                 continue
 
-            # 2.2. Convert time.struct_time to naive UTC datetime
-            article_time = datetime(*pub_tuple[:6])
+            # 2.2. Convert time.struct_time to UTC-aware datetime
+            article_time = datetime(*pub_tuple[:6], tzinfo=timezone.utc)
 
             # 2.3. Check if the article falls within the timeline threshold
             if start_date <= article_time <= end_date:
