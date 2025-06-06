@@ -1,2 +1,2 @@
 from .ns_prompts import finance_decision_scoring_usage_2
-from .ns_constants import NEWS_SCORING_MIN_TITLE_PAIRS
+from .ns_constants import NEWS_SCORING_MIN_TITLE_PAIRS, NEWS_SCORING_MAX_TITLE_PAIRS

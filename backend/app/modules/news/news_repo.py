@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, time, timedelta, timezone
 from typing import Sequence
 from sqlalchemy import Row, select, func
 from sqlalchemy.orm import Session
@@ -93,6 +93,39 @@ class NewsRepository:
         stmt = (
             select(NewsArticleData.id, NewsArticleData.title)
             .where(NewsArticleData.id.in_(article_ids))
+        )
+        return self.db.execute(stmt).all()
+
+    def get_id_title_pairs_by_published_date(
+        self,
+        date: date,
+    ) -> Sequence[Row[tuple[int, str | None]]]:
+        """
+        Fetch (id, title) pairs for all articles whose `published_at`
+        falls within the given UTC calendar date.
+
+        Since `published_at` is a DateTime column (UTC-normalized) and
+        the incoming filter is a `date`, we translate the date into a
+        half-open UTC range: [00:00:00Z, next_day 00:00:00Z). This keeps
+        the query sargable against `ix_news_article_data_published_at`.
+
+        Args:
+            date: The UTC calendar date to filter by.
+
+        Returns:
+            A sequence of SQLAlchemy Row objects, each carrying
+            (id, title) as a tuple. Empty sequence if no rows match.
+        """
+        start = datetime.combine(date, time.min, tzinfo=timezone.utc)
+        end = start + timedelta(days=1)
+
+        stmt = (
+            select(NewsArticleData.id, NewsArticleData.title)
+            .where(
+                NewsArticleData.published_at >= start,
+                NewsArticleData.published_at < end,
+            )
+            .order_by(NewsArticleData.id)
         )
         return self.db.execute(stmt).all()
 

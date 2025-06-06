@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from fastapi import HTTPException, status
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
@@ -127,6 +127,37 @@ class NewsService:
         
         rows = self.repo.get_id_title_pairs_by_ids(article_ids)
         
+        return [
+            ArticleTitleData(id=row.id, title=row.title)
+            for row in rows
+            if row.title is not None
+        ]
+
+    def get_titles_by_published_date(
+        self,
+        date: date | None,
+    ) -> list[ArticleTitleData]:
+        """
+        Retrieve (id, title) pairs for articles published on the given
+        UTC calendar date.
+
+        Args:
+            date: The UTC published date to filter by. If None, returns
+                an empty list (defensive short-circuit).
+
+        Returns:
+            A list of ArticleTitleData. Empty list if no date is provided,
+            if the repository returns no rows, or if all rows have a null
+            title.
+        """
+        if not date:
+            return []
+
+        rows = self.repo.get_id_title_pairs_by_published_date(date)
+
+        if not rows:
+            return []
+
         return [
             ArticleTitleData(id=row.id, title=row.title)
             for row in rows
