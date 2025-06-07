@@ -24,7 +24,7 @@ async def scoring_news_titles(
 
     Returns:
     """
-    return await orchestrator.sync_and_get_news_scores(payload)
+    return await orchestrator.sync_and_get_news_scores(payload.article_ids)
 
 
 @router.get(

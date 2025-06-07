@@ -1,7 +1,7 @@
 from datetime import date
 from fastapi import HTTPException, status
 
-from app.modules.news_scoring.ns_schemas import BatchScoringResponse, NewsScoreBatchRequest
+from app.modules.news_scoring.ns_schemas import BatchScoringResponse
 from app.modules.news_scoring.ns_utils import validate_batch_size, validate_title_pairs_count
 from app.modules.news_scoring.ns_service import NewsScoringService
 from app.modules.news_scoring.constants import NEWS_SCORING_MIN_TITLE_PAIRS, NEWS_SCORING_MAX_TITLE_PAIRS
@@ -20,13 +20,13 @@ class NewsScoringOrchestrator:
 
     def sync_and_get_news_scores(
         self, 
-        payload: NewsScoreBatchRequest
+        article_ids: list[int]
     ) -> BatchScoringResponse:
         # 1. Check total data retrieved (min: 10 and max: 20)
-        validate_batch_size(payload.article_ids)
+        validate_batch_size(article_ids)
 
         # 2. Get all news titles from database
-        news_titles_and_id = self.news.get_titles_by_ids(payload.article_ids)
+        news_titles_and_id = self.news.get_titles_by_ids(article_ids)
 
         # 3. Sanitize titles by removing source suffix
         news_titles_and_id = sanitize_article_titles(news_titles_and_id)
