@@ -34,6 +34,9 @@ class NewsScoringOrchestrator:
         # 4. Scoring titles
         scoring_response = self.news_scoring.score_titles(news_titles_and_id)
 
+        # 5. Persist scores back onto the existing news rows
+        self.news.update_news_scores(scoring_response)
+
         return scoring_response
 
     async def get_titles_for_scoring(

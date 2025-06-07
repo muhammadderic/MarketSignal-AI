@@ -19,10 +19,6 @@ async def scoring_news_titles(
 ) -> BatchScoringResponse:
     """
     Scoring news titles.
-
-    Args:
-
-    Returns:
     """
     return await orchestrator.sync_and_get_news_scores(payload.article_ids)
 

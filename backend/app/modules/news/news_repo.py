@@ -1,6 +1,6 @@
 from datetime import datetime, date, time, timedelta, timezone
 from typing import Sequence
-from sqlalchemy import Row, select, func
+from sqlalchemy import Row, select, func, bindparam, update
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.sqlite import insert
 
@@ -147,4 +147,41 @@ class NewsRepository:
         )
 
         self.db.execute(stmt)
+        self.db.commit()
+
+    # === UPDATE ===
+    def update_news_scores(
+        self,
+        score_payload: list[dict[str, any]],
+    ) -> None:
+        """
+        Bulk-update `relevance_score` and `relevance_reason` for a batch
+        of news rows, keyed by primary key `id`.
+
+        Uses SQLAlchemy 2.0's executemany-style bulk UPDATE, which emits
+        a single `UPDATE ... WHERE id = :id` statement executed once per
+        payload entry within one round-trip. To avoid N individual
+        SELECT+UPDATE pairs for N scored articles.
+
+        Args:
+            score_payload: List of dicts, each containing at minimum:
+                - "id" (int): target row primary key
+                - "relevance_score" (int)
+                - "relevance_reason" (str)
+
+        Returns:
+            None. Commits the transaction on success.
+
+        Raises:
+            SQLAlchemyError: Propagated on DB failure; caller is
+                responsible for rollback if the session is shared.
+        """
+        if not score_payload:
+            return
+
+        stmt = update(NewsArticleData).where(
+            NewsArticleData.id == bindparam("id")
+        )
+
+        self.db.execute(stmt, score_payload)
         self.db.commit()
