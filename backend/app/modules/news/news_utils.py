@@ -1,32 +1,24 @@
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Union
 from urllib.parse import parse_qs, urlparse
 
 from app.modules.news.news_schemas import ArticleTitleData
-from app.modules.news.news_constants import SQLITE_FORMAT, ArticleLocale
+from app.modules.news.news_constants import ArticleLocale
 
 
-def parse_input_date(
-    val: Optional[Union[str, datetime]], 
-    default_val: datetime
-) -> datetime:
-    """
-    Parse input date string/datetime to naive UTC datetime.
+def parse_input_date(date_val: str | datetime | None, fallback: datetime) -> datetime:
+    """Safely converts string/datetime inputs to UTC-aware datetimes without losing original values."""
+    if date_val is None:
+        dt = fallback
+    elif isinstance(date_val, str):
+        dt = datetime.fromisoformat(date_val.replace(" ", "T"))
+    else:
+        dt = date_val
+
+    # Ensure UTC-aware without changing wall-clock time
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
     
-    Args:
-        val: Input value (string, datetime, or None)
-        default_val: Default datetime if val is None
-        
-    Returns:
-        Naive UTC datetime
-    """
-    if val is None:
-        return default_val
-    if isinstance(val, str):
-        return datetime.strptime(val, SQLITE_FORMAT)
-    if isinstance(val, datetime) and val.tzinfo is not None:
-        return val.astimezone(timezone.utc).replace(tzinfo=None)
-    return val
+    return dt.astimezone(timezone.utc)
 
 
 def extract_original_url(google_news_link: str) -> str:
@@ -44,9 +36,9 @@ def is_data_fresh(
 ) -> bool:
     """
     Determine if stored data is still fresh based on an age threshold.
-    
+
     Args:
-        last_published_at: The timestamp of the most recent stored record.
+        last_published_at: The UTC-aware timestamp of the most recent stored record.
         max_age_hours: Maximum allowable data age in hours before considered stale.
 
     Returns:
@@ -54,12 +46,16 @@ def is_data_fresh(
     """
     if last_published_at is None:
         return False
-    
-    # Establish naive UTC timestamp for comparison
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # 1. Ensure last_published_at is UTC-aware (defensive check for safety)
+    if last_published_at.tzinfo is None:
+        last_published_at = last_published_at.replace(tzinfo=timezone.utc)
+
+    # 2. Establish UTC-aware cutoff timestamp
+    now = datetime.now(timezone.utc)
     cutoff = now - timedelta(hours=max_age_hours)
-    
-    # Data is fresh if the newest record is STRICTLY AFTER the age cutoff
+
+    # 3. Data is fresh if the newest record is strictly after the cutoff
     return last_published_at > cutoff
 
 

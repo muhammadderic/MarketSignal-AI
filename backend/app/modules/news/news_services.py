@@ -1,22 +1,25 @@
 import logging
 from datetime import date, datetime, timedelta, timezone
+from typing import Sequence
 from fastapi import HTTPException, status
+from cachetools.func import ttl_cache
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
 from app.modules.news.news_schemas import (
     ArticleTitleData,
     NewsFeedResponse, 
-    NewsArticle
+    NewsArticle,
+    DateMetadataSchema
 )
 from app.modules.news.news_utils import (
-    parse_input_date, 
+    parse_input_date,
     extract_original_url,
     is_data_fresh,
     get_max_age_cutoff,
     validate_locale
 )
 from app.modules.news.news_constants import ArticleLocale
-from app.modules.news.news_repo import NewsRepository
+from app.modules.news.news_repo import NewsRepository, NewsDateSummaryRow
 from app.modules.news_scoring.ns_schemas import BatchScoringResponse
 
 logger = logging.getLogger(__name__)
@@ -32,6 +35,13 @@ class NewsService:
         self.repo = repo
         self.client = client
     
+    # === READ ===
+    @ttl_cache(maxsize=128, ttl=600)
+    def get_available_dates(self) -> list[DateMetadataSchema]:
+        raw_rows = self.repo.get_distinct_published_dates()
+        transformed_data = self._transform_date_summary_rows(raw_rows)
+        return [DateMetadataSchema(**item) for item in transformed_data]
+
     def get_business_news(self, locale: str = "ID") -> NewsFeedResponse:
         """
         Fetch and filter business news from Google RSS feed with caching strategy.
@@ -52,11 +62,11 @@ class NewsService:
 
         # 2. Evaluate cache fresh status against database threshold
         # 2.1. Retrieve the timestamp of the most recent article in persistent storage
-        latest_data = self.repo.get_latest_published_at()
+        latest_date = self.repo.get_latest_published_at()
         
         # 2.2. Validate data staleness based on configured maximum allowable age
         is_fresh = is_data_fresh(
-            last_published_at=latest_data,
+            last_published_at=latest_date,
             max_age_hours=5
         )
 
@@ -68,12 +78,12 @@ class NewsService:
 
             # 3.2. Harvest raw news payload from external Google RSS endpoint
             feed_data = self.client.fetch_feed()
-        
+
             # 3.3. Screen feed entries published after the last database checkpoint
             filtered_articles = self._filter_recent_news(
                 feed_entries=feed_data.get("entries", []),
                 locale=validated_locale,
-                start_date=latest_data,
+                start_date=latest_date,
                 with_link=True
             )
 
@@ -91,6 +101,9 @@ class NewsService:
                 for article in filtered_articles
             ]
             self.repo.save_filtered_articles(article_dicts)
+
+            # 3.5. Clear cache for get_available_dates()
+            self.get_available_dates.cache_clear()
             
         # 4. Determine lookback cutoff timestamp for cached article retrieval
         start_date = get_max_age_cutoff()
@@ -165,6 +178,7 @@ class NewsService:
             if row.title is not None
         ]
 
+    # === UPDATE ===
     def update_news_scores(
         self,
         scoring_response: BatchScoringResponse,
@@ -197,6 +211,9 @@ class NewsService:
 
         self.repo.update_news_scores(score_payload)
 
+    # =======================
+    # === PRIVATE METHODS ===
+    # =======================
     def _filter_recent_news(
         self,
         feed_entries: list[dict[str, any]],
@@ -231,7 +248,7 @@ class NewsService:
         now = datetime.now(timezone.utc)
 
         end_date = parse_input_date(end_date, now)
-        start_date = parse_input_date(start_date, end_date - timedelta(days=1))
+        one_day_before = start_date - timedelta(days=1)
 
         # Resolve locale string representation if an Enum member was passed
         locale_str = locale.value if isinstance(locale, ArticleLocale) else locale
@@ -249,7 +266,7 @@ class NewsService:
             article_time = datetime(*pub_tuple[:6], tzinfo=timezone.utc)
 
             # 2.3. Check if the article falls within the timeline threshold
-            if start_date <= article_time <= end_date:
+            if one_day_before <= article_time <= end_date:
                 # 2.3.1. Extract source name from feed entry metadata
                 source_name = entry.source.get('title', 'Unknown Source') if 'source' in entry else 'Unknown Source'
 
@@ -277,3 +294,12 @@ class NewsService:
         logger.info(f"Total News    : {len(filtered_articles)} articles found within this window.")
 
         return filtered_articles
+
+    def _transform_date_summary_rows(
+        self, rows: Sequence[NewsDateSummaryRow]
+    ) -> list[dict[str, any]]:
+        """Private helper to convert database Row tuples into API-ready dictionaries."""
+        return [
+            {"date": row.news_date, "total_articles": row.total_articles}
+            for row in rows
+        ]

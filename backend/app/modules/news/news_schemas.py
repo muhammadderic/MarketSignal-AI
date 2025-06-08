@@ -1,5 +1,5 @@
-from datetime import datetime
-from pydantic import BaseModel, Field
+from datetime import datetime, date as DateType
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.modules.news.news_constants import ArticleLocale
 
@@ -55,3 +55,17 @@ class ArticleTitleData(BaseModel):
     
     id: int = Field(..., description="Article ID")
     title: str = Field(..., description="Article title")
+
+
+class DateMetadataSchema(BaseModel):
+    """Represents a single available news date along with total article counts."""
+
+    date: DateType = Field(
+        ...,
+        description="Published date for available news articles (YYYY-MM-DD)",
+    )
+    total_articles: int = Field(
+        ..., ge=0, description="Total count of articles published on this date"
+    )
+
+    model_config = ConfigDict(from_attributes=True)

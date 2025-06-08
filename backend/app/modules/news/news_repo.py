@@ -1,6 +1,6 @@
 from datetime import datetime, date, time, timedelta, timezone
 from typing import Sequence
-from sqlalchemy import Row, select, func, bindparam, update
+from sqlalchemy import Row, select, func, bindparam, update, desc
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.sqlite import insert
 
@@ -20,6 +20,7 @@ NewsArticleRecordRow = Row[
         str | None,
     ]
 ]
+NewsDateSummaryRow = Row[tuple[str, int]]
 
 class NewsRepository:
     def __init__(self, db: Session):
@@ -33,11 +34,18 @@ class NewsRepository:
         Returns:
             The most recent published_at datetime, or None if the table is empty.
         """
-        latest_timestamp = self.db.query(
+        latest_dt = self.db.query(
             func.max(NewsArticleData.published_at)
         ).scalar()
 
-        return latest_timestamp
+        if latest_dt is None:
+            return None
+
+        # Convert SQLite's offset-naive datetime into UTC-aware datetime
+        if latest_dt.tzinfo is None:
+            return latest_dt.replace(tzinfo=timezone.utc)
+
+        return latest_dt.astimezone(timezone.utc)
 
     def get_articles_from_date(
         self,
@@ -126,6 +134,18 @@ class NewsRepository:
                 NewsArticleData.published_at < end,
             )
             .order_by(NewsArticleData.id)
+        )
+        return self.db.execute(stmt).all()
+
+    def get_distinct_published_dates(self) -> Sequence[NewsDateSummaryRow]:
+        """Queries database for unique dates and their respective article counts."""
+        stmt = (
+            select(
+                func.date(NewsArticleData.published_at).label("news_date"),
+                func.count(NewsArticleData.id).label("total_articles"),
+            )
+            .group_by(func.date(NewsArticleData.published_at))
+            .order_by(desc("news_date"))
         )
         return self.db.execute(stmt).all()
 
