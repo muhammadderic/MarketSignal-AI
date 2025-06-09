@@ -1,4 +1,5 @@
 import logging
+from calendar import timegm
 from datetime import date, datetime, timedelta, timezone
 from typing import Sequence
 from fastapi import HTTPException, status
@@ -12,13 +13,11 @@ from app.modules.news.news_schemas import (
     DateMetadataSchema
 )
 from app.modules.news.news_utils import (
-    parse_input_date,
     extract_original_url,
     is_data_fresh,
     get_max_age_cutoff,
     validate_locale
 )
-from app.modules.news.news_constants import ArticleLocale
 from app.modules.news.news_repo import NewsRepository, NewsDateSummaryRow
 from app.modules.news_scoring.ns_schemas import BatchScoringResponse
 
@@ -82,9 +81,7 @@ class NewsService:
             # 3.3. Screen feed entries published after the last database checkpoint
             filtered_articles = self._filter_recent_news(
                 feed_entries=feed_data.get("entries", []),
-                locale=validated_locale,
                 start_date=latest_date,
-                with_link=True
             )
 
             # 3.4. Extract raw dictionary payloads and execute bulk persistence with deduplication
@@ -94,7 +91,7 @@ class NewsService:
                     "source": article["source"],
                     "published_at": article["published_at"],
                     "link": article["link"],
-                    "locale": article["locale"],
+                    "locale": validated_locale,
                     "relevance_score": None,
                     "relevance_reason": None,
                 }
@@ -217,83 +214,34 @@ class NewsService:
     def _filter_recent_news(
         self,
         feed_entries: list[dict[str, any]],
-        locale: ArticleLocale | str = ArticleLocale.ID,
-        start_date: str | datetime | None = None,
-        end_date: str | datetime | None = None,
-        with_link: bool = True
+        start_date: datetime | None = None,
     ) -> list[dict[str, any]]:
-        """
-        Filters Google News feed entries within a precise time window and attaches locale metadata.
-
-        All boundary and article datetimes are UTC-aware. Articles are stored
-        as `datetime(..., tzinfo=timezone.utc)`, which SQLAlchemy serializes
-        with an explicit `+00:00` offset when the column is declared as
-        `DateTime(timezone=True)`.
-
-        Args:
-            feed_entries: List of feed entries from parsed feed.
-            locale: Target locale code or ArticleLocale Enum for the articles.
-                Defaults to ArticleLocale.ID.
-            start_date: Start boundary (datetime or 'YYYY-MM-DD HH:MM:SS').
-                Defaults to 24h before `end_date`.
-            end_date: End boundary (datetime or 'YYYY-MM-DD HH:MM:SS').
-                Defaults to right now (UTC).
-            with_link: Whether to include the article URL link in the output.
-
-        Returns:
-            list[dict[str, Any]]: Filtered article dictionaries containing
-            UTC-aware datetime objects for database compatibility.
-        """
-        # 1. Establish UTC-aware datetime boundaries
         now = datetime.now(timezone.utc)
+        cutoff = start_date or (now - timedelta(days=1))
 
-        end_date = parse_input_date(end_date, now)
-        one_day_before = start_date - timedelta(days=1)
+        filtered_entries = []
 
-        # Resolve locale string representation if an Enum member was passed
-        locale_str = locale.value if isinstance(locale, ArticleLocale) else locale
-
-        filtered_articles: list[dict[str, any]] = []
-
-        # 2. Iterate and screen the article elements
         for entry in feed_entries:
-            # 2.1. Extract published timestamp from feed entry
-            pub_tuple = entry.get('published_parsed')
-            if not pub_tuple:
+            published_at = datetime.fromtimestamp(
+                timegm(entry["published_parsed"]),
+                tz=timezone.utc,
+            )
+
+            if not cutoff <= published_at <= now:
                 continue
 
-            # 2.2. Convert time.struct_time to UTC-aware datetime
-            article_time = datetime(*pub_tuple[:6], tzinfo=timezone.utc)
+            raw_link = entry.get("link")
 
-            # 2.3. Check if the article falls within the timeline threshold
-            if one_day_before <= article_time <= end_date:
-                # 2.3.1. Extract source name from feed entry metadata
-                source_name = entry.source.get('title', 'Unknown Source') if 'source' in entry else 'Unknown Source'
-
-                # 2.3.2. Construct core data payload with native datetime object for database compatibility
-                article_data: dict[str, any] = {
-                    "title": entry.get('title', None),
-                    "source": source_name,
-                    "published_at": article_time,
-                    "locale": locale_str,
+            filtered_entries.append(
+                {
+                    "title": entry["title"],
+                    "source": entry["source"]["title"],
+                    "published_at": published_at,
+                    "link": extract_original_url(raw_link) if raw_link else None,
                 }
+            )
 
-                # 2.3.3. Include and extract original article URL if requested
-                if with_link:
-                    raw_link = entry.get('link', None)
-                    article_data["link"] = extract_original_url(raw_link) if raw_link else None
-
-                filtered_articles.append(article_data)
-
-        # 3. Sorting articles by Published Date
-        filtered_articles.sort(
-            key=lambda x: x["published_at"],
-            reverse=True  # Newest first
-        )
-
-        logger.info(f"Total News    : {len(filtered_articles)} articles found within this window.")
-
-        return filtered_articles
+        return filtered_entries
 
     def _transform_date_summary_rows(
         self, rows: Sequence[NewsDateSummaryRow]

@@ -5,22 +5,6 @@ from app.modules.news.news_schemas import ArticleTitleData
 from app.modules.news.news_constants import ArticleLocale
 
 
-def parse_input_date(date_val: str | datetime | None, fallback: datetime) -> datetime:
-    """Safely converts string/datetime inputs to UTC-aware datetimes without losing original values."""
-    if date_val is None:
-        dt = fallback
-    elif isinstance(date_val, str):
-        dt = datetime.fromisoformat(date_val.replace(" ", "T"))
-    else:
-        dt = date_val
-
-    # Ensure UTC-aware without changing wall-clock time
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    
-    return dt.astimezone(timezone.utc)
-
-
 def extract_original_url(google_news_link: str) -> str:
     """
     Extract the original article URL from Google News redirect link.
