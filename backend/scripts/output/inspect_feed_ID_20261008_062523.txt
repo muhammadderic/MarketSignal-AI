@@ -1,0 +1,253 @@
+
+==============================================================================
+TOP-LEVEL KEYS
+==============================================================================
+['feed', 'entries']
+
+==============================================================================
+FEED METADATA
+==============================================================================
+feed (dict, 16 keys)
+  generator_detail (dict, 1 keys)
+    'name': str
+      value: 'NFE/5.0'
+  'generator': str
+    value: 'NFE/5.0'
+  'title': str
+    value: 'Business - Latest - Google News'
+  title_detail (dict, 4 keys)
+    'type': str
+      value: 'text/plain'
+    'language': NoneType
+      value: None
+    'base': str
+      value: 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en'
+    'value': str
+      value: 'Business - Latest - Google News'
+  links (list, len=1)
+    links[0] (dict, 3 keys)
+      'rel': str
+        value: 'alternate'
+      'type': str
+        value: 'text/html'
+      'href': str
+        value: 'https://news.google.com/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en'
+  'link': str
+    value: 'https://news.google.com/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en'
+  'language': str
+    value: 'en-ID'
+  'publisher': str
+    value: 'news-webmaster@google.com'
+  publisher_detail (dict, 1 keys)
+    'email': str
+      value: 'news-webmaster@google.com'
+  'rights': str
+    value: 'Copyright © 2026 Google. All rights reserved. This XML feed is made available solely for the purpose of rendering Google News results within a personal feed reader for personal, non-commercial use. Any other use of the feed is expressly prohibited. By accessing this feed or using these results in any manner whatsoever, you agree to be bound by the foregoing restrictions.'
+  rights_detail (dict, 4 keys)
+    'type': str
+      value: 'text/plain'
+    'language': NoneType
+      value: None
+    'base': str
+      value: 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en'
+    'value': str
+      value: 'Copyright © 2026 Google. All rights reserved. This XML feed is made available solely for the purpose of rendering Google News results within a personal feed reader for personal, non-commercial use. Any other use of the feed is expressly prohibited. By accessing this feed or using these results in any manner whatsoever, you agree to be bound by the foregoing restrictions.'
+  'updated': str
+    value: 'Wed, 07 Oct 2026 23:25:23 GMT'
+  'updated_parsed': struct_time
+    value: time.struct_time(tm_year=2026, tm_mon=10, tm_mday=7, tm_hour=23, tm_min=25, tm_sec=23, tm_wday=2, tm_yday=280, tm_isdst=0)
+  image (dict, 7 keys)
+    'title': str
+      value: 'Google News'
+    title_detail (dict, 4 keys)
+      'type': str
+        value: 'text/plain'
+      'language': NoneType
+        value: None
+      'base': str
+        value: 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en'
+      'value': str
+        value: 'Google News'
+    'href': str
+      value: 'https://lh3.googleusercontent.com/-DR60l-K8vnyi99NZovm9HlXyZwQ85GMDxiwJWzoasZYCUrPuUM_P_4Rb7ei03j-0nRs0c4F=w256'
+    links (list, len=1)
+      links[0] (dict, 3 keys)
+        'rel': str
+          value: 'alternate'
+        'type': str
+          value: 'text/html'
+        'href': str
+          value: 'https://news.google.com/'
+    'link': str
+      value: 'https://news.google.com/'
+    'height': int
+      value: 256
+    'width': int
+      value: 256
+  'subtitle': str
+    value: 'Google News'
+  subtitle_detail (dict, 4 keys)
+    'type': str
+      value: 'text/html'
+    'language': NoneType
+      value: None
+    'base': str
+      value: 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en'
+    'value': str
+      value: 'Google News'
+
+==============================================================================
+ENTRIES[0]
+==============================================================================
+entries[0] (dict, 11 keys)
+  'title': str
+    value: 'Indonesia plans one million hectares of sugarcane for its E20 bioethanol ambition - Malay Mail'
+  title_detail (dict, 4 keys)
+    'type': str
+      value: 'text/plain'
+    'language': NoneType
+      value: None
+    'base': str
+      value: 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en'
+    'value': str
+      value: 'Indonesia plans one million hectares of sugarcane for its E20 bioethanol ambition - Malay Mail'
+  links (list, len=1)
+    links[0] (dict, 3 keys)
+      'rel': str
+        value: 'alternate'
+      'type': str
+        value: 'text/html'
+      'href': str
+        value: 'https://news.google.com/rss/articles/CBMi0gFBVV95cUxQSDVYXzZUOWc5R3hxc09TSDg1QVU2ZTZhSlBCWE5fRENEa0phS2gwQ2VzQ0hINmk1VXJFRklrOEJXV3ZtRjhXV2xyN09NY2NzdU1GZXNUcDhENVRCWHlBYllnNllRS3hLc2w4TUNNSHJqQnlpUTR4MjdmZ1ZVbTkzN00ySnRyMU0zR3NrdU1WSkU3TEpLMHdrc1N6ZjljQldkU3hHTUFjMlhTMVJWbVNGa09HTVdPRzlGZ0ctbEs5b1pCaUkyQmRUbXlsczZPbVNBaXfSAdcBQVVfeXFMTWRqSFN4aTJ3Zm1OQXk3bmVfVmYyZkhETWY0emlVWFBBUWNtTk1aZ2xfOEVjZFBrNGJGcElUOXdoSlFoS21hczZzQktBMlNoS0VjTmhaRFRiQTRydUMySDNQTndTeXhaUEozMkRId2FlcEstdi1ZT3JoRDN1Z05UdnhkVENVS3h3emNwbE5tTEpCc0lkZDBnRkhSM1FvZ1JRcVA4U1ZLbzFMczBtcHhtbHRYVXUzZmVjVEx3NnFJWi1wTEJZMkY5NFhETzJ2RnFoNzVETWl0eVU?oc=5'
+  'link': str
+    value: 'https://news.google.com/rss/articles/CBMi0gFBVV95cUxQSDVYXzZUOWc5R3hxc09TSDg1QVU2ZTZhSlBCWE5fRENEa0phS2gwQ2VzQ0hINmk1VXJFRklrOEJXV3ZtRjhXV2xyN09NY2NzdU1GZXNUcDhENVRCWHlBYllnNllRS3hLc2w4TUNNSHJqQnlpUTR4MjdmZ1ZVbTkzN00ySnRyMU0zR3NrdU1WSkU3TEpLMHdrc1N6ZjljQldkU3hHTUFjMlhTMVJWbVNGa09HTVdPRzlGZ0ctbEs5b1pCaUkyQmRUbXlsczZPbVNBaXfSAdcBQVVfeXFMTWRqSFN4aTJ3Zm1OQXk3bmVfVmYyZkhETWY0emlVWFBBUWNtTk1aZ2xfOEVjZFBrNGJGcElUOXdoSlFoS21hczZzQktBMlNoS0VjTmhaRFRiQTRydUMySDNQTndTeXhaUEozMkRId2FlcEstdi1ZT3JoRDN1Z05UdnhkVENVS3h3emNwbE5tTEpCc0lkZDBnRkhSM1FvZ1JRcVA4U1ZLbzFMczBtcHhtbHRYVXUzZmVjVEx3NnFJWi1wTEJZMkY5NFhETzJ2RnFoNzVETWl0eVU?oc=5'
+  'id': str
+    value: 'CBMi0gFBVV95cUxQSDVYXzZUOWc5R3hxc09TSDg1QVU2ZTZhSlBCWE5fRENEa0phS2gwQ2VzQ0hINmk1VXJFRklrOEJXV3ZtRjhXV2xyN09NY2NzdU1GZXNUcDhENVRCWHlBYllnNllRS3hLc2w4TUNNSHJqQnlpUTR4MjdmZ1ZVbTkzN00ySnRyMU0zR3NrdU1WSkU3TEpLMHdrc1N6ZjljQldkU3hHTUFjMlhTMVJWbVNGa09HTVdPRzlGZ0ctbEs5b1pCaUkyQmRUbXlsczZPbVNBaXfSAdcBQVVfeXFMTWRqSFN4aTJ3Zm1OQXk3bmVfVmYyZkhETWY0emlVWFBBUWNtTk1aZ2xfOEVjZFBrNGJGcElUOXdoSlFoS21hczZzQktBMlNoS0VjTmhaRFRiQTRydUMySDNQTndTeXhaUEozMkRId2FlcEstdi1ZT3JoRDN1Z05UdnhkVENVS3h3emNwbE5tTEpCc0lkZDBnRkhSM1FvZ1JRcVA4U1ZLbzFMczBtcHhtbHRYVXUzZmVjVEx3NnFJWi1wTEJZMkY5NFhETzJ2RnFoNzVETWl0eVU'
+  'guidislink': bool
+    value: False
+  'published': str
+    value: 'Wed, 07 Oct 2026 07:16:22 GMT'
+  'published_parsed': struct_time
+    value: time.struct_time(tm_year=2026, tm_mon=10, tm_mday=7, tm_hour=7, tm_min=16, tm_sec=22, tm_wday=2, tm_yday=280, tm_isdst=0)
+  'summary': str
+    value: '<ol><li><a href="https://news.google.com/rss/articles/CBMi0gFBVV95cUxQSDVYXzZUOWc5R3hxc09TSDg1QVU2ZTZhSlBCWE5fRENEa0phS2gwQ2VzQ0hINmk1VXJFRklrOEJXV3ZtRjhXV2xyN09NY2NzdU1GZXNUcDhENVRCWHlBYllnNllRS3hLc2w4TUNNSHJqQnlpUTR4MjdmZ1ZVbTkzN00ySnRyMU0zR3NrdU1WSkU3TEpLMHdrc1N6ZjljQldkU3hHTUFjMlhTMVJWbVNGa09HTVdPRzlGZ0ctbEs5b1pCaUkyQmRUbXlsczZPbVNBaXfSAdcBQVVfeXFMTWRqSFN4aTJ3Zm1OQXk3bmVfVmYyZkhETWY0emlVWFBBUWNtTk1aZ2xfOEVjZFBrNGJGcElUOXdoSlFoS21hczZzQktBMlNoS0VjTmhaRFRiQTRydUMySDNQTndTeXhaUEozMkRId2FlcEstdi1ZT3JoRDN1Z05UdnhkVENVS3h3emNwbE5tTEpCc0lkZDBnRkhSM1FvZ1JRcVA4U1ZLbzFMczBtcHhtbHRYVXUzZmVjVEx3NnFJWi1wTEJZMkY5NFhETzJ2RnFoNzVETWl0eVU?oc=5" target="_blank">Indonesia plans one million hectares of sugarcane for its E20 bioethanol ambition</a>&nbsp;&nbsp;<font color="#6f6f6f">Malay Mail</font></li><li><a href="https://news.google.com/rss/articles/CBMiowFBVV95cUxNNTA1RnVNVndVVnpRVmdaczkwY3RUTEZCZG9sLVMwSHRWNTdTX3U5Zl9EeGZXNXZ1UHMtZ01xb3NrX2dFc2pNS2FXRFJidUNTNkdMWlhUbUt0eEJFa3I2LWxUVXpERmVHZ0h1eVpteUkyVW9VSVY2TGRoT0YyRUtaOFk4SnRlV3Npb3RuN0t5UTlCNkczeE1vYm5sWFMyV3ZNaGpB0gGoAUFVX3lxTE01UzY3MUpZWjc1dVNBcmpVaW9IU3NLeHhUbm9QMUFnd1REYkNLRVBZd1NBR0pBbjNnUEdTQnR1OVhZakdOWGY1UGtBMkp0dDZRMVNOME9DNEJsbDJRdlQ3cXpvX20xd01UdnZ3Y05fM3hjSmpvVFZfZTFFLWF4WTMtYXJxOHJ1dFNVYUpiTGZQSVNYRzNZQmhZX1A3R2QzT20yTkJlUlNoRA?oc=5" target="_blank">Indonesia seeks to utilize degraded land for biofuel production</a>&nbsp;&nbsp;<font color="#6f6f6f">ANTARA News</font></li><li><a href="https://news.google.com/rss/articles/CBMiqwFBVV95cUxQa0ZUTlItRFpnUkwzNDRmQjlzbnNwTmZTd0VlY3dHdXRyek1fWlhjd2lZRTIyMm4zMTBybHpZVEIzY3ZPZUd3ZkRKd0cybHJfYzZkQ2ZwdkRpVE9VTFNKY0kxYW5qXzJIWWlUOHBOV3FMN1hBakRkMWtXS0s2eThXQjRoVjZDNU1ZMEhNbVBSMVRCcTlkZEdpa3NPeGdqUzhEWnlQT2o2X0sybG8?oc=5" target="_blank">Indonesia secures its fuel supply at the cost of its food and forests</a>&nbsp;&nbsp;<font color="#6f6f6f">East Asia Forum</font></li><li><a href="https://news.google.com/rss/articles/CBMioAFBVV95cUxNZllZcTJ5YzlhRFE5bXBYUF8wU3JqMVV2T0hTV1cxUjRrLVdVQkUyenRZVVh1U2xmeFR0RjdvYlBOYkZkbURtVUlNVGNwdzJnc3NzeWZlOTdsOG9sTXVtbWx5SVZzVVlEWTZWcHBod2luNG5VcUxTYjVzcWkxLUtXcHZjUzhrazJCY0xwSUFZWjMwYjZSeWRNdXFVOEIwSjVM?oc=5" target="_blank">Indonesia Targets E20 Gasoline Blend by 2027–2028, Eyes E50 to Cut Fuel Imports</a>&nbsp;&nbsp;<font color="#6f6f6f">Ecobiz Asia</font></li><li><a href="https://news.google.com/rss/articles/CBMiugFBVV95cUxQMzViRHlOVS1mbTkwWjZGY0kzRnJYN0dvSlJwN3h3M21nYUxPSWduWFNzNk1Bb2JMWUtnRnJCRzgxZnVTeUJGNk5xd0Y5Mmk2S1ZWZGx1YXRCSmwxeUxraVZoQnF4VkRudDNWbGlacC1OWWxuS09mZ0hKWlRrUlY0ZWdtM242eDI3LUtBMGI5SHF6SXNaMWhHa0owMXhBR3FiU2NiSWVLZ2kzR3JkRldFRlpDYU5kTUJoZ2c?oc=5" target="_blank">Danantara to invest in ethanol infrastructure over next three years</a>&nbsp;&nbsp;<font color="#6f6f6f">The Jakarta Post</font></li></ol>'
+  summary_detail (dict, 4 keys)
+    'type': str
+      value: 'text/html'
+    'language': NoneType
+      value: None
+    'base': str
+      value: 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en'
+    'value': str
+      value: '<ol><li><a href="https://news.google.com/rss/articles/CBMi0gFBVV95cUxQSDVYXzZUOWc5R3hxc09TSDg1QVU2ZTZhSlBCWE5fRENEa0phS2gwQ2VzQ0hINmk1VXJFRklrOEJXV3ZtRjhXV2xyN09NY2NzdU1GZXNUcDhENVRCWHlBYllnNllRS3hLc2w4TUNNSHJqQnlpUTR4MjdmZ1ZVbTkzN00ySnRyMU0zR3NrdU1WSkU3TEpLMHdrc1N6ZjljQldkU3hHTUFjMlhTMVJWbVNGa09HTVdPRzlGZ0ctbEs5b1pCaUkyQmRUbXlsczZPbVNBaXfSAdcBQVVfeXFMTWRqSFN4aTJ3Zm1OQXk3bmVfVmYyZkhETWY0emlVWFBBUWNtTk1aZ2xfOEVjZFBrNGJGcElUOXdoSlFoS21hczZzQktBMlNoS0VjTmhaRFRiQTRydUMySDNQTndTeXhaUEozMkRId2FlcEstdi1ZT3JoRDN1Z05UdnhkVENVS3h3emNwbE5tTEpCc0lkZDBnRkhSM1FvZ1JRcVA4U1ZLbzFMczBtcHhtbHRYVXUzZmVjVEx3NnFJWi1wTEJZMkY5NFhETzJ2RnFoNzVETWl0eVU?oc=5" target="_blank">Indonesia plans one million hectares of sugarcane for its E20 bioethanol ambition</a>&nbsp;&nbsp;<font color="#6f6f6f">Malay Mail</font></li><li><a href="https://news.google.com/rss/articles/CBMiowFBVV95cUxNNTA1RnVNVndVVnpRVmdaczkwY3RUTEZCZG9sLVMwSHRWNTdTX3U5Zl9EeGZXNXZ1UHMtZ01xb3NrX2dFc2pNS2FXRFJidUNTNkdMWlhUbUt0eEJFa3I2LWxUVXpERmVHZ0h1eVpteUkyVW9VSVY2TGRoT0YyRUtaOFk4SnRlV3Npb3RuN0t5UTlCNkczeE1vYm5sWFMyV3ZNaGpB0gGoAUFVX3lxTE01UzY3MUpZWjc1dVNBcmpVaW9IU3NLeHhUbm9QMUFnd1REYkNLRVBZd1NBR0pBbjNnUEdTQnR1OVhZakdOWGY1UGtBMkp0dDZRMVNOME9DNEJsbDJRdlQ3cXpvX20xd01UdnZ3Y05fM3hjSmpvVFZfZTFFLWF4WTMtYXJxOHJ1dFNVYUpiTGZQSVNYRzNZQmhZX1A3R2QzT20yTkJlUlNoRA?oc=5" target="_blank">Indonesia seeks to utilize degraded land for biofuel production</a>&nbsp;&nbsp;<font color="#6f6f6f">ANTARA News</font></li><li><a href="https://news.google.com/rss/articles/CBMiqwFBVV95cUxQa0ZUTlItRFpnUkwzNDRmQjlzbnNwTmZTd0VlY3dHdXRyek1fWlhjd2lZRTIyMm4zMTBybHpZVEIzY3ZPZUd3ZkRKd0cybHJfYzZkQ2ZwdkRpVE9VTFNKY0kxYW5qXzJIWWlUOHBOV3FMN1hBakRkMWtXS0s2eThXQjRoVjZDNU1ZMEhNbVBSMVRCcTlkZEdpa3NPeGdqUzhEWnlQT2o2X0sybG8?oc=5" target="_blank">Indonesia secures its fuel supply at the cost of its food and forests</a>&nbsp;&nbsp;<font color="#6f6f6f">East Asia Forum</font></li><li><a href="https://news.google.com/rss/articles/CBMioAFBVV95cUxNZllZcTJ5YzlhRFE5bXBYUF8wU3JqMVV2T0hTV1cxUjRrLVdVQkUyenRZVVh1U2xmeFR0RjdvYlBOYkZkbURtVUlNVGNwdzJnc3NzeWZlOTdsOG9sTXVtbWx5SVZzVVlEWTZWcHBod2luNG5VcUxTYjVzcWkxLUtXcHZjUzhrazJCY0xwSUFZWjMwYjZSeWRNdXFVOEIwSjVM?oc=5" target="_blank">Indonesia Targets E20 Gasoline Blend by 2027–2028, Eyes E50 to Cut Fuel Imports</a>&nbsp;&nbsp;<font color="#6f6f6f">Ecobiz Asia</font></li><li><a href="https://news.google.com/rss/articles/CBMiugFBVV95cUxQMzViRHlOVS1mbTkwWjZGY0kzRnJYN0dvSlJwN3h3M21nYUxPSWduWFNzNk1Bb2JMWUtnRnJCRzgxZnVTeUJGNk5xd0Y5Mmk2S1ZWZGx1YXRCSmwxeUxraVZoQnF4VkRudDNWbGlacC1OWWxuS09mZ0hKWlRrUlY0ZWdtM242eDI3LUtBMGI5SHF6SXNaMWhHa0owMXhBR3FiU2NiSWVLZ2kzR3JkRldFRlpDYU5kTUJoZ2c?oc=5" target="_blank">Danantara to invest in ethanol infrastructure over next three years</a>&nbsp;&nbsp;<font color="#6f6f6f">The Jakarta Post</font></li></ol>'
+  source (dict, 2 keys)
+    'href': str
+      value: 'https://www.malaymail.com'
+    'title': str
+      value: 'Malay Mail'
+
+==============================================================================
+RAW PRETTY-PRINT (feed)
+==============================================================================
+{'generator': 'NFE/5.0',
+ 'generator_detail': {'name': 'NFE/5.0'},
+ 'image': {'height': 256,
+           'href': 'https://lh3.googleusercontent.com/-DR60l-K8vnyi99NZovm9HlXyZwQ85GMDxiwJWzoasZYCUrPuUM_P_4Rb7ei03j-0nRs0c4F=w256',
+           'link': 'https://news.google.com/',
+           'links': [{'href': 'https://news.google.com/', 'rel': 'alternate', 'type': 'text/html'}],
+           'title': 'Google News',
+           'title_detail': {'base': 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en',
+                            'language': None,
+                            'type': 'text/plain',
+                            'value': 'Google News'},
+           'width': 256},
+ 'language': 'en-ID',
+ 'link': 'https://news.google.com/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en',
+ 'links': [{'href': 'https://news.google.com/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en',
+            'rel': 'alternate',
+            'type': 'text/html'}],
+ 'publisher': 'news-webmaster@google.com',
+ 'publisher_detail': {'email': 'news-webmaster@google.com'},
+ 'rights': 'Copyright © 2026 Google. All rights reserved. This XML feed is made available solely for the purpose of '
+           'rendering Google News results within a personal feed reader for personal, non-commercial use. Any other '
+           'use of the feed is expressly prohibited. By accessing this feed or using these results in any manner '
+           'whatsoever, you agree to be bound by the foregoing restrictions.',
+ 'rights_detail': {'base': 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en',
+                   'language': None,
+                   'type': 'text/plain',
+                   'value': 'Copyright © 2026 Google. All rights reserved. This XML feed is made available solely for '
+                            'the purpose of rendering Google News results within a personal feed reader for personal, '
+                            'non-commercial use. Any other use of the feed is expressly prohibited. By accessing this '
+                            'feed or using these results in any manner whatsoever, you agree to be bound by the '
+                            'foregoing restrictions.'},
+ 'subtitle': 'Google News',
+ 'subtitle_detail': {'base': 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en',
+                     'language': None,
+                     'type': 'text/html',
+                     'value': 'Google News'},
+ 'title': 'Business - Latest - Google News',
+ 'title_detail': {'base': 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en',
+                  'language': None,
+                  'type': 'text/plain',
+                  'value': 'Business - Latest - Google News'},
+ 'updated': 'Wed, 07 Oct 2026 23:25:23 GMT',
+ 'updated_parsed': time.struct_time(tm_year=2026, tm_mon=10, tm_mday=7, tm_hour=23, tm_min=25, tm_sec=23, tm_wday=2, tm_yday=280, tm_isdst=0)}
+
+==============================================================================
+RAW PRETTY-PRINT (entries[0])
+==============================================================================
+{'guidislink': False,
+ 'id': 'CBMi0gFBVV95cUxQSDVYXzZUOWc5R3hxc09TSDg1QVU2ZTZhSlBCWE5fRENEa0phS2gwQ2VzQ0hINmk1VXJFRklrOEJXV3ZtRjhXV2xyN09NY2NzdU1GZXNUcDhENVRCWHlBYllnNllRS3hLc2w4TUNNSHJqQnlpUTR4MjdmZ1ZVbTkzN00ySnRyMU0zR3NrdU1WSkU3TEpLMHdrc1N6ZjljQldkU3hHTUFjMlhTMVJWbVNGa09HTVdPRzlGZ0ctbEs5b1pCaUkyQmRUbXlsczZPbVNBaXfSAdcBQVVfeXFMTWRqSFN4aTJ3Zm1OQXk3bmVfVmYyZkhETWY0emlVWFBBUWNtTk1aZ2xfOEVjZFBrNGJGcElUOXdoSlFoS21hczZzQktBMlNoS0VjTmhaRFRiQTRydUMySDNQTndTeXhaUEozMkRId2FlcEstdi1ZT3JoRDN1Z05UdnhkVENVS3h3emNwbE5tTEpCc0lkZDBnRkhSM1FvZ1JRcVA4U1ZLbzFMczBtcHhtbHRYVXUzZmVjVEx3NnFJWi1wTEJZMkY5NFhETzJ2RnFoNzVETWl0eVU',
+ 'link': 'https://news.google.com/rss/articles/CBMi0gFBVV95cUxQSDVYXzZUOWc5R3hxc09TSDg1QVU2ZTZhSlBCWE5fRENEa0phS2gwQ2VzQ0hINmk1VXJFRklrOEJXV3ZtRjhXV2xyN09NY2NzdU1GZXNUcDhENVRCWHlBYllnNllRS3hLc2w4TUNNSHJqQnlpUTR4MjdmZ1ZVbTkzN00ySnRyMU0zR3NrdU1WSkU3TEpLMHdrc1N6ZjljQldkU3hHTUFjMlhTMVJWbVNGa09HTVdPRzlGZ0ctbEs5b1pCaUkyQmRUbXlsczZPbVNBaXfSAdcBQVVfeXFMTWRqSFN4aTJ3Zm1OQXk3bmVfVmYyZkhETWY0emlVWFBBUWNtTk1aZ2xfOEVjZFBrNGJGcElUOXdoSlFoS21hczZzQktBMlNoS0VjTmhaRFRiQTRydUMySDNQTndTeXhaUEozMkRId2FlcEstdi1ZT3JoRDN1Z05UdnhkVENVS3h3emNwbE5tTEpCc0lkZDBnRkhSM1FvZ1JRcVA4U1ZLbzFMczBtcHhtbHRYVXUzZmVjVEx3NnFJWi1wTEJZMkY5NFhETzJ2RnFoNzVETWl0eVU?oc=5',
+ 'links': [{'href': 'https://news.google.com/rss/articles/CBMi0gFBVV95cUxQSDVYXzZUOWc5R3hxc09TSDg1QVU2ZTZhSlBCWE5fRENEa0phS2gwQ2VzQ0hINmk1VXJFRklrOEJXV3ZtRjhXV2xyN09NY2NzdU1GZXNUcDhENVRCWHlBYllnNllRS3hLc2w4TUNNSHJqQnlpUTR4MjdmZ1ZVbTkzN00ySnRyMU0zR3NrdU1WSkU3TEpLMHdrc1N6ZjljQldkU3hHTUFjMlhTMVJWbVNGa09HTVdPRzlGZ0ctbEs5b1pCaUkyQmRUbXlsczZPbVNBaXfSAdcBQVVfeXFMTWRqSFN4aTJ3Zm1OQXk3bmVfVmYyZkhETWY0emlVWFBBUWNtTk1aZ2xfOEVjZFBrNGJGcElUOXdoSlFoS21hczZzQktBMlNoS0VjTmhaRFRiQTRydUMySDNQTndTeXhaUEozMkRId2FlcEstdi1ZT3JoRDN1Z05UdnhkVENVS3h3emNwbE5tTEpCc0lkZDBnRkhSM1FvZ1JRcVA4U1ZLbzFMczBtcHhtbHRYVXUzZmVjVEx3NnFJWi1wTEJZMkY5NFhETzJ2RnFoNzVETWl0eVU?oc=5',
+            'rel': 'alternate',
+            'type': 'text/html'}],
+ 'published': 'Wed, 07 Oct 2026 07:16:22 GMT',
+ 'published_parsed': time.struct_time(tm_year=2026, tm_mon=10, tm_mday=7, tm_hour=7, tm_min=16, tm_sec=22, tm_wday=2, tm_yday=280, tm_isdst=0),
+ 'source': {'href': 'https://www.malaymail.com', 'title': 'Malay Mail'},
+ 'summary': '<ol><li><a '
+            'href="https://news.google.com/rss/articles/CBMi0gFBVV95cUxQSDVYXzZUOWc5R3hxc09TSDg1QVU2ZTZhSlBCWE5fRENEa0phS2gwQ2VzQ0hINmk1VXJFRklrOEJXV3ZtRjhXV2xyN09NY2NzdU1GZXNUcDhENVRCWHlBYllnNllRS3hLc2w4TUNNSHJqQnlpUTR4MjdmZ1ZVbTkzN00ySnRyMU0zR3NrdU1WSkU3TEpLMHdrc1N6ZjljQldkU3hHTUFjMlhTMVJWbVNGa09HTVdPRzlGZ0ctbEs5b1pCaUkyQmRUbXlsczZPbVNBaXfSAdcBQVVfeXFMTWRqSFN4aTJ3Zm1OQXk3bmVfVmYyZkhETWY0emlVWFBBUWNtTk1aZ2xfOEVjZFBrNGJGcElUOXdoSlFoS21hczZzQktBMlNoS0VjTmhaRFRiQTRydUMySDNQTndTeXhaUEozMkRId2FlcEstdi1ZT3JoRDN1Z05UdnhkVENVS3h3emNwbE5tTEpCc0lkZDBnRkhSM1FvZ1JRcVA4U1ZLbzFMczBtcHhtbHRYVXUzZmVjVEx3NnFJWi1wTEJZMkY5NFhETzJ2RnFoNzVETWl0eVU?oc=5" '
+            'target="_blank">Indonesia plans one million hectares of sugarcane for its E20 bioethanol '
+            'ambition</a>&nbsp;&nbsp;<font color="#6f6f6f">Malay Mail</font></li><li><a '
+            'href="https://news.google.com/rss/articles/CBMiowFBVV95cUxNNTA1RnVNVndVVnpRVmdaczkwY3RUTEZCZG9sLVMwSHRWNTdTX3U5Zl9EeGZXNXZ1UHMtZ01xb3NrX2dFc2pNS2FXRFJidUNTNkdMWlhUbUt0eEJFa3I2LWxUVXpERmVHZ0h1eVpteUkyVW9VSVY2TGRoT0YyRUtaOFk4SnRlV3Npb3RuN0t5UTlCNkczeE1vYm5sWFMyV3ZNaGpB0gGoAUFVX3lxTE01UzY3MUpZWjc1dVNBcmpVaW9IU3NLeHhUbm9QMUFnd1REYkNLRVBZd1NBR0pBbjNnUEdTQnR1OVhZakdOWGY1UGtBMkp0dDZRMVNOME9DNEJsbDJRdlQ3cXpvX20xd01UdnZ3Y05fM3hjSmpvVFZfZTFFLWF4WTMtYXJxOHJ1dFNVYUpiTGZQSVNYRzNZQmhZX1A3R2QzT20yTkJlUlNoRA?oc=5" '
+            'target="_blank">Indonesia seeks to utilize degraded land for biofuel production</a>&nbsp;&nbsp;<font '
+            'color="#6f6f6f">ANTARA News</font></li><li><a '
+            'href="https://news.google.com/rss/articles/CBMiqwFBVV95cUxQa0ZUTlItRFpnUkwzNDRmQjlzbnNwTmZTd0VlY3dHdXRyek1fWlhjd2lZRTIyMm4zMTBybHpZVEIzY3ZPZUd3ZkRKd0cybHJfYzZkQ2ZwdkRpVE9VTFNKY0kxYW5qXzJIWWlUOHBOV3FMN1hBakRkMWtXS0s2eThXQjRoVjZDNU1ZMEhNbVBSMVRCcTlkZEdpa3NPeGdqUzhEWnlQT2o2X0sybG8?oc=5" '
+            'target="_blank">Indonesia secures its fuel supply at the cost of its food and '
+            'forests</a>&nbsp;&nbsp;<font color="#6f6f6f">East Asia Forum</font></li><li><a '
+            'href="https://news.google.com/rss/articles/CBMioAFBVV95cUxNZllZcTJ5YzlhRFE5bXBYUF8wU3JqMVV2T0hTV1cxUjRrLVdVQkUyenRZVVh1U2xmeFR0RjdvYlBOYkZkbURtVUlNVGNwdzJnc3NzeWZlOTdsOG9sTXVtbWx5SVZzVVlEWTZWcHBod2luNG5VcUxTYjVzcWkxLUtXcHZjUzhrazJCY0xwSUFZWjMwYjZSeWRNdXFVOEIwSjVM?oc=5" '
+            'target="_blank">Indonesia Targets E20 Gasoline Blend by 2027–2028, Eyes E50 to Cut Fuel '
+            'Imports</a>&nbsp;&nbsp;<font color="#6f6f6f">Ecobiz Asia</font></li><li><a '
+            'href="https://news.google.com/rss/articles/CBMiugFBVV95cUxQMzViRHlOVS1mbTkwWjZGY0kzRnJYN0dvSlJwN3h3M21nYUxPSWduWFNzNk1Bb2JMWUtnRnJCRzgxZnVTeUJGNk5xd0Y5Mmk2S1ZWZGx1YXRCSmwxeUxraVZoQnF4VkRudDNWbGlacC1OWWxuS09mZ0hKWlRrUlY0ZWdtM242eDI3LUtBMGI5SHF6SXNaMWhHa0owMXhBR3FiU2NiSWVLZ2kzR3JkRldFRlpDYU5kTUJoZ2c?oc=5" '
+            'target="_blank">Danantara to invest in ethanol infrastructure over next three years</a>&nbsp;&nbsp;<font '
+            'color="#6f6f6f">The Jakarta Post</font></li></ol>',
+ 'summary_detail': {'base': 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en',
+                    'language': None,
+                    'type': 'text/html',
+                    'value': '<ol><li><a '
+                             'href="https://news.google.com/rss/articles/CBMi0gFBVV95cUxQSDVYXzZUOWc5R3hxc09TSDg1QVU2ZTZhSlBCWE5fRENEa0phS2gwQ2VzQ0hINmk1VXJFRklrOEJXV3ZtRjhXV2xyN09NY2NzdU1GZXNUcDhENVRCWHlBYllnNllRS3hLc2w4TUNNSHJqQnlpUTR4MjdmZ1ZVbTkzN00ySnRyMU0zR3NrdU1WSkU3TEpLMHdrc1N6ZjljQldkU3hHTUFjMlhTMVJWbVNGa09HTVdPRzlGZ0ctbEs5b1pCaUkyQmRUbXlsczZPbVNBaXfSAdcBQVVfeXFMTWRqSFN4aTJ3Zm1OQXk3bmVfVmYyZkhETWY0emlVWFBBUWNtTk1aZ2xfOEVjZFBrNGJGcElUOXdoSlFoS21hczZzQktBMlNoS0VjTmhaRFRiQTRydUMySDNQTndTeXhaUEozMkRId2FlcEstdi1ZT3JoRDN1Z05UdnhkVENVS3h3emNwbE5tTEpCc0lkZDBnRkhSM1FvZ1JRcVA4U1ZLbzFMczBtcHhtbHRYVXUzZmVjVEx3NnFJWi1wTEJZMkY5NFhETzJ2RnFoNzVETWl0eVU?oc=5" '
+                             'target="_blank">Indonesia plans one million hectares of sugarcane for its E20 bioethanol '
+                             'ambition</a>&nbsp;&nbsp;<font color="#6f6f6f">Malay Mail</font></li><li><a '
+                             'href="https://news.google.com/rss/articles/CBMiowFBVV95cUxNNTA1RnVNVndVVnpRVmdaczkwY3RUTEZCZG9sLVMwSHRWNTdTX3U5Zl9EeGZXNXZ1UHMtZ01xb3NrX2dFc2pNS2FXRFJidUNTNkdMWlhUbUt0eEJFa3I2LWxUVXpERmVHZ0h1eVpteUkyVW9VSVY2TGRoT0YyRUtaOFk4SnRlV3Npb3RuN0t5UTlCNkczeE1vYm5sWFMyV3ZNaGpB0gGoAUFVX3lxTE01UzY3MUpZWjc1dVNBcmpVaW9IU3NLeHhUbm9QMUFnd1REYkNLRVBZd1NBR0pBbjNnUEdTQnR1OVhZakdOWGY1UGtBMkp0dDZRMVNOME9DNEJsbDJRdlQ3cXpvX20xd01UdnZ3Y05fM3hjSmpvVFZfZTFFLWF4WTMtYXJxOHJ1dFNVYUpiTGZQSVNYRzNZQmhZX1A3R2QzT20yTkJlUlNoRA?oc=5" '
+                             'target="_blank">Indonesia seeks to utilize degraded land for biofuel '
+                             'production</a>&nbsp;&nbsp;<font color="#6f6f6f">ANTARA News</font></li><li><a '
+                             'href="https://news.google.com/rss/articles/CBMiqwFBVV95cUxQa0ZUTlItRFpnUkwzNDRmQjlzbnNwTmZTd0VlY3dHdXRyek1fWlhjd2lZRTIyMm4zMTBybHpZVEIzY3ZPZUd3ZkRKd0cybHJfYzZkQ2ZwdkRpVE9VTFNKY0kxYW5qXzJIWWlUOHBOV3FMN1hBakRkMWtXS0s2eThXQjRoVjZDNU1ZMEhNbVBSMVRCcTlkZEdpa3NPeGdqUzhEWnlQT2o2X0sybG8?oc=5" '
+                             'target="_blank">Indonesia secures its fuel supply at the cost of its food and '
+                             'forests</a>&nbsp;&nbsp;<font color="#6f6f6f">East Asia Forum</font></li><li><a '
+                             'href="https://news.google.com/rss/articles/CBMioAFBVV95cUxNZllZcTJ5YzlhRFE5bXBYUF8wU3JqMVV2T0hTV1cxUjRrLVdVQkUyenRZVVh1U2xmeFR0RjdvYlBOYkZkbURtVUlNVGNwdzJnc3NzeWZlOTdsOG9sTXVtbWx5SVZzVVlEWTZWcHBod2luNG5VcUxTYjVzcWkxLUtXcHZjUzhrazJCY0xwSUFZWjMwYjZSeWRNdXFVOEIwSjVM?oc=5" '
+                             'target="_blank">Indonesia Targets E20 Gasoline Blend by 2027–2028, Eyes E50 to Cut Fuel '
+                             'Imports</a>&nbsp;&nbsp;<font color="#6f6f6f">Ecobiz Asia</font></li><li><a '
+                             'href="https://news.google.com/rss/articles/CBMiugFBVV95cUxQMzViRHlOVS1mbTkwWjZGY0kzRnJYN0dvSlJwN3h3M21nYUxPSWduWFNzNk1Bb2JMWUtnRnJCRzgxZnVTeUJGNk5xd0Y5Mmk2S1ZWZGx1YXRCSmwxeUxraVZoQnF4VkRudDNWbGlacC1OWWxuS09mZ0hKWlRrUlY0ZWdtM242eDI3LUtBMGI5SHF6SXNaMWhHa0owMXhBR3FiU2NiSWVLZ2kzR3JkRldFRlpDYU5kTUJoZ2c?oc=5" '
+                             'target="_blank">Danantara to invest in ethanol infrastructure over next three '
+                             'years</a>&nbsp;&nbsp;<font color="#6f6f6f">The Jakarta Post</font></li></ol>'},
+ 'title': 'Indonesia plans one million hectares of sugarcane for its E20 bioethanol ambition - Malay Mail',
+ 'title_detail': {'base': 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVWxFR2dKSlJDZ0FQAQ?hl=en-ID&gl=ID&ceid=ID:en',
+                  'language': None,
+                  'type': 'text/plain',
+                  'value': 'Indonesia plans one million hectares of sugarcane for its E20 bioethanol ambition - Malay '
+                           'Mail'}}
+
+==============================================================================
+ENTRY COUNT
+==============================================================================
+70
