@@ -18,7 +18,8 @@ from app.modules.news.news_utils import (
     extract_original_url,
     is_data_fresh,
     get_max_age_cutoff,
-    validate_locale
+    validate_locale,
+    build_utc_day_bounds
 )
 from app.modules.news.news_repo import NewsRepository, NewsDateSummaryRow
 from app.modules.news_scoring.ns_schemas import BatchScoringResponse
@@ -108,7 +109,7 @@ class NewsService:
         start_date = get_max_age_cutoff()
 
         # 5. Query persisted news articles within the active timeline boundary
-        filtered_articles = self.repo.get_articles_from_date(
+        filtered_articles = self.repo.get_all_by_published_date(
             start_date=start_date,
             locale=validated_locale
         )
@@ -193,8 +194,11 @@ class NewsService:
         Returns:
             A list of NewsArticleResponse payloads, newest first.
         """
+        start_date, end_date = build_utc_day_bounds(published_date)
+
         rows = self.repo.get_all_by_published_date(
-            published_date=published_date,
+            start_date=start_date,
+            end_date=end_date,
             locale=locale.value,
         )
 

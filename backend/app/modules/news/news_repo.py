@@ -6,7 +6,6 @@ from sqlalchemy.dialects.sqlite import insert
 
 from app.modules.news.models import NewsArticleData
 from app.modules.news.news_constants import ArticleLocale
-from app.modules.news.news_utils import build_utc_day_bounds
 
 
 NewsArticleRecordRow = Row[
@@ -22,18 +21,7 @@ NewsArticleRecordRow = Row[
     ]
 ]
 NewsDateSummaryRow = Row[tuple[str, int]]
-NewsArticleRow = Row[
-    tuple[
-        int,
-        str | None,
-        str,
-        datetime,
-        str | None,
-        str,
-        int | None,
-        str | None,
-    ]
-]
+
 
 class NewsRepository:
     def __init__(self, db: Session):
@@ -60,21 +48,31 @@ class NewsRepository:
 
         return latest_dt.astimezone(timezone.utc)
 
-    def get_articles_from_date(
+    def get_all_by_published_date(
         self,
         start_date: datetime,
-        locale: ArticleLocale | str = ArticleLocale.ID
+        locale: ArticleLocale,
+        end_date: datetime | None = None,
     ) -> Sequence[NewsArticleRecordRow]:
         """
-        Fetch all articles matching published_at >= start_date and target locale, newest first.
-        
+        Fetch all news articles whose `published_at` falls within the
+        given UTC calendar date, scoped to a locale.
+
+        Uses an inclusive [00:00:00, 23:59:59] UTC range so the query
+        remains sargable against `ix_news_article_data_published_at`.
+
         Args:
-            start_date: Lower bound (inclusive) for published_at filter.
-            locale: Target locale filter (e.g., ArticleLocale.ID or 'ID').
-            
+            start_date
+            end_date
+            locale: Locale string (e.g. "ID") to scope results.
+
         Returns:
-            Sequence of rows, each containing (title, source, published_at, link, locale).
+            Sequence of projected rows carrying the full article payload,
+            newest first.
         """
+        if end_date is None:
+            end_date = datetime.now(timezone.utc).replace(tzinfo=None)
+
         stmt = (
             select(
                 NewsArticleData.id,
@@ -88,48 +86,7 @@ class NewsRepository:
             )
             .where(
                 NewsArticleData.published_at >= start_date,
-                NewsArticleData.locale == locale,
-            )
-            .order_by(NewsArticleData.published_at.desc())
-        )
-        return self.db.execute(stmt).all()
-
-    def get_all_by_published_date(
-        self,
-        published_date: date,
-        locale: ArticleLocale,
-    ) -> Sequence[NewsArticleRow]:
-        """
-        Fetch all news articles whose `published_at` falls within the
-        given UTC calendar date, scoped to a locale.
-
-        Uses an inclusive [00:00:00, 23:59:59] UTC range so the query
-        remains sargable against `ix_news_article_data_published_at`.
-
-        Args:
-            published_date: The UTC calendar date to filter by.
-            locale: Locale string (e.g. "ID") to scope results.
-
-        Returns:
-            Sequence of projected rows carrying the full article payload,
-            newest first.
-        """
-        start, end = build_utc_day_bounds(published_date)
-
-        stmt = (
-            select(
-                NewsArticleData.id,
-                NewsArticleData.title,
-                NewsArticleData.source,
-                NewsArticleData.published_at,
-                NewsArticleData.link,
-                NewsArticleData.locale,
-                NewsArticleData.relevance_score,
-                NewsArticleData.relevance_reason,
-            )
-            .where(
-                NewsArticleData.published_at >= start,
-                NewsArticleData.published_at <= end,
+                NewsArticleData.published_at <= end_date,
                 NewsArticleData.locale == locale,
             )
             .order_by(NewsArticleData.published_at.desc())
