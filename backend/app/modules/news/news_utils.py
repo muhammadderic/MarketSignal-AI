@@ -53,10 +53,10 @@ def get_max_age_cutoff(max_age_day: int = 1) -> datetime:
     Returns:
         Naive UTC datetime representing the oldest acceptable timestamp.
         Example: now = "2026-08-27 10:00:00", max_age_day = 1 
-                 → returns "2026-08-26 09:59:59"
+                 → returns "2026-08-26 10:00:00"
     """
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    return now - timedelta(days=max_age_day) - timedelta(seconds=1)
+    return now - timedelta(days=max_age_day)
 
 
 def validate_locale(locale: str) -> ArticleLocale | None:
