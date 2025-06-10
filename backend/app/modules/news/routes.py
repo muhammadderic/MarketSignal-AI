@@ -1,8 +1,10 @@
+from datetime import date
 from fastapi import APIRouter, Depends, Query
 
 from app.modules.news.dependencies import get_news_service
+from app.modules.news.news_constants import ArticleLocale
+from app.modules.news.news_schemas import NewsFeedResponse, DateMetadataSchema, NewsArticleResponse
 from app.modules.news.news_services import NewsService
-from app.modules.news.news_schemas import NewsFeedResponse, DateMetadataSchema
 
 router = APIRouter(prefix="/news")
 
@@ -39,3 +41,30 @@ async def get_available_news_dates(
     """Fetch distinct publication dates available in the news store."""
     dates_list = service.get_available_dates()
     return dates_list
+
+
+# Retrieve all news articles published on a specific UTC calendar date.
+@router.get(
+    "/by-date",
+    response_model=list[NewsArticleResponse],
+)
+async def get_news_by_date(
+    date: date = Query(..., description="Article date in YYYY-MM-DD format"),
+    locale: ArticleLocale = Query(
+        ArticleLocale.ID,
+        description="Article locale (defaults to ID)",
+    ),
+    service: NewsService = Depends(get_news_service),
+) -> list[NewsArticleResponse]:
+    """
+    Retrieve all news articles published on a specific UTC calendar date,
+    scoped to a locale.
+
+    Args:
+        date: The UTC calendar date to fetch articles for (YYYY-MM-DD).
+        locale: Target locale; defaults to ArticleLocale.ID.
+
+    Returns:
+        A list of NewsArticleResponse payloads, newest first.
+    """
+    return service.get_news_by_published_date(date, locale)

@@ -6,11 +6,13 @@ from fastapi import HTTPException, status
 from cachetools.func import ttl_cache
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
+from app.modules.news.news_constants import ArticleLocale
 from app.modules.news.news_schemas import (
     ArticleTitleData,
     NewsFeedResponse, 
     NewsArticle,
-    DateMetadataSchema
+    DateMetadataSchema,
+    NewsArticleResponse
 )
 from app.modules.news.news_utils import (
     extract_original_url,
@@ -173,6 +175,41 @@ class NewsService:
             ArticleTitleData(id=row.id, title=row.title)
             for row in rows
             if row.title is not None
+        ]
+
+    def get_news_by_published_date(
+        self,
+        published_date: date,
+        locale: ArticleLocale,
+    ) -> list[NewsArticleResponse]:
+        """
+        Retrieve all articles published on a given UTC calendar date,
+        scoped to a locale.
+
+        Args:
+            published_date: The UTC date to filter articles by.
+            locale: Target locale (e.g. ArticleLocale.ID).
+
+        Returns:
+            A list of NewsArticleResponse payloads, newest first.
+        """
+        rows = self.repo.get_all_by_published_date(
+            published_date=published_date,
+            locale=locale.value,
+        )
+
+        return [
+            NewsArticleResponse(
+                id=row.id,
+                title=row.title,
+                source=row.source,
+                published_at=row.published_at,
+                link=row.link,
+                locale=row.locale,
+                relevance_score=row.relevance_score,
+                relevance_reason=row.relevance_reason,
+            )
+            for row in rows
         ]
 
     # === UPDATE ===

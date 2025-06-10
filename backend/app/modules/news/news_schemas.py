@@ -69,3 +69,22 @@ class DateMetadataSchema(BaseModel):
     )
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class NewsArticleResponse(BaseModel):
+    """Full news article payload returned to the client."""
+
+    id: int = Field(..., description="Article ID")
+    title: str | None = Field(None, description="Article title")
+    source: str = Field(..., description="Source publisher name")
+    published_at: datetime = Field(..., description="UTC publish timestamp")
+    link: str | None = Field(None, description="Original article URL")
+    locale: ArticleLocale = Field(..., description="Article locale")
+    relevance_score: int | None = Field(
+        None, description="LLM financial relevance score (1-5)"
+    )
+    relevance_reason: str | None = Field(
+        None, description="LLM explanation for the relevance score"
+    )
+
+    model_config = ConfigDict(from_attributes=True)

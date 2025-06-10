@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta, time
 from urllib.parse import parse_qs, urlparse
 
 from app.modules.news.news_schemas import ArticleTitleData
@@ -105,3 +105,22 @@ def sanitize_article_titles(
         )
     
     return sanitized
+
+
+def build_utc_day_bounds(
+    published_date: date,
+) -> tuple[datetime, datetime]:
+    """
+    Build a half-open UTC datetime range covering a full calendar day.
+
+    Args:
+        published_date: The UTC calendar date to bound.
+
+    Returns:
+        A tuple (start, end) where:
+            - start = published_date at 00:00:00 UTC (inclusive)
+            - end   = published_date at 23:59:59 UTC (inclusive)
+    """
+    start = datetime.combine(published_date, time.min, tzinfo=timezone.utc)
+    end = datetime.combine(published_date, time.max, tzinfo=timezone.utc)
+    return start, end

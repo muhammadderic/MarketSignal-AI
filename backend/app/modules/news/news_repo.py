@@ -6,6 +6,7 @@ from sqlalchemy.dialects.sqlite import insert
 
 from app.modules.news.models import NewsArticleData
 from app.modules.news.news_constants import ArticleLocale
+from app.modules.news.news_utils import build_utc_day_bounds
 
 
 NewsArticleRecordRow = Row[
@@ -21,6 +22,18 @@ NewsArticleRecordRow = Row[
     ]
 ]
 NewsDateSummaryRow = Row[tuple[str, int]]
+NewsArticleRow = Row[
+    tuple[
+        int,
+        str | None,
+        str,
+        datetime,
+        str | None,
+        str,
+        int | None,
+        str | None,
+    ]
+]
 
 class NewsRepository:
     def __init__(self, db: Session):
@@ -79,6 +92,49 @@ class NewsRepository:
             )
             .order_by(NewsArticleData.published_at.desc())
         )
+        return self.db.execute(stmt).all()
+
+    def get_all_by_published_date(
+        self,
+        published_date: date,
+        locale: ArticleLocale,
+    ) -> Sequence[NewsArticleRow]:
+        """
+        Fetch all news articles whose `published_at` falls within the
+        given UTC calendar date, scoped to a locale.
+
+        Uses an inclusive [00:00:00, 23:59:59] UTC range so the query
+        remains sargable against `ix_news_article_data_published_at`.
+
+        Args:
+            published_date: The UTC calendar date to filter by.
+            locale: Locale string (e.g. "ID") to scope results.
+
+        Returns:
+            Sequence of projected rows carrying the full article payload,
+            newest first.
+        """
+        start, end = build_utc_day_bounds(published_date)
+
+        stmt = (
+            select(
+                NewsArticleData.id,
+                NewsArticleData.title,
+                NewsArticleData.source,
+                NewsArticleData.published_at,
+                NewsArticleData.link,
+                NewsArticleData.locale,
+                NewsArticleData.relevance_score,
+                NewsArticleData.relevance_reason,
+            )
+            .where(
+                NewsArticleData.published_at >= start,
+                NewsArticleData.published_at <= end,
+                NewsArticleData.locale == locale,
+            )
+            .order_by(NewsArticleData.published_at.desc())
+        )
+
         return self.db.execute(stmt).all()
 
     def get_id_title_pairs_by_ids(
