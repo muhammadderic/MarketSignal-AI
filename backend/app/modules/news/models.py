@@ -1,14 +1,11 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from sqlalchemy import DateTime, String, Text, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.shared.utils import utc_now
 from app.modules.news.news_constants import ArticleLocale
 
-
-def utc_now() -> datetime:
-    """Returns the current timezone-aware UTC datetime."""
-    return datetime.now(timezone.utc)
 
 class NewsArticleData(Base):
     """Stores raw news article metadata harvested from RSS feeds."""
