@@ -1,23 +1,20 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
-class ModelInfo(BaseModel):
-    """Schema for a single LLM model entry."""
+class ExternalModelInfo(BaseModel):
+    """Persistence-agnostic schema for an LLM model coming from an
+    external provider.
 
-    model_config = ConfigDict(from_attributes=True)
+    Has no `id` because the DB assigns the primary key on insert, and
+    no wrapper container because the adapter returns a plain list —
+    counting is the service's responsibility.
+    """
 
-    id: int = Field(..., description="Primary key of the model record")
     model_id: str = Field(..., description="Model identifier from the provider")
     object_type: str = Field(..., description="Object type")
     owned_by: str = Field(..., description="Owner of the model")
     active: bool = Field(default=True, description="Whether the model is currently active")
     context_window: int = Field(..., description="Maximum context window token limit")
     created_date: datetime = Field(..., description="UTC-aware creation timestamp")
-
-
-class ModelsResponse(BaseModel):
-    """Schema for a list of available LLM models."""
-
-    models: list[ModelInfo] = Field(..., description="List of available models")
-    count: int = Field(default=0, description="Total number of models available")
+    
