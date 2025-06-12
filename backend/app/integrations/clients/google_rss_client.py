@@ -60,4 +60,22 @@ class GoogleRSSClient:
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"Failed to fetch news feed from Google RSS: {str(e)}"
             )
-    
+
+    def fetch_entries(self) -> list[dict]:
+        """
+        Fetch the configured RSS feed and return the raw parsed `entries` list.
+        Returns the raw feedparser entry dicts without transformation.
+        """
+        url = f"{self.BASE_URL}?{self.locale_params}"
+
+        logger.info("Fetching Google News RSS feed: %s", url)
+        parsed = feedparser.parse(url)
+
+        if getattr(parsed, "bozo", 0):
+            logger.warning(
+                "Google News RSS feed reported bozo=%s exception=%s",
+                parsed.bozo,
+                getattr(parsed, "bozo_exception", None),
+            )
+
+        return list(parsed.entries)
