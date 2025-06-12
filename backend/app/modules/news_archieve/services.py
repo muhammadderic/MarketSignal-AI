@@ -73,7 +73,7 @@ class NewsArchieveService:
             for row_day, total in rows
             if total > 0
         ]
-        counts.sort(key=lambda item: item.date)
+        counts.sort(key=lambda item: item.date, reverse=True)
 
         response = ArchiveCountsResponse(
             month=month,

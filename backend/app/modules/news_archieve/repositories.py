@@ -42,7 +42,7 @@ class NewsArchieveRepo:
                 NewsArticleData.published_at < end,
             )
             .group_by(day_expr)
-            .order_by(day_expr.asc())
+            .order_by(day_expr.desc())
         )
 
         raw = self.db.execute(stmt).all()

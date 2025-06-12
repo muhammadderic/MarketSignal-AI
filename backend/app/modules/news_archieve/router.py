@@ -26,6 +26,9 @@ async def get_archive_counts(
     ),
     service: NewsArchieveService = Depends(get_news_archieve_service),
 ) -> ArchiveCountsResponse:
-    """Return per-day article counts for one month and locale (for calendar badges)."""
-    return service.get_archive_counts(month=month, locale=locale)
+    """
+    Return per-day article counts for one month and locale (for calendar badges).
     
+    `counts` is sorted by `date` descending (newest first).
+    """
+    return service.get_archive_counts(month=month, locale=locale)

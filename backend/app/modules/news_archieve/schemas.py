@@ -16,4 +16,4 @@ class ArchiveCountsResponse(BaseModel):
 
     month: str
     locale: ArticleLocale
-    counts: list[ArchiveCountItem]
+    counts: list[ArchiveCountItem] # sorted by date descending (newest first)
