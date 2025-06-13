@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.modules.news.dependencies import get_news_service
 from app.modules.news.news_constants import ArticleLocale
-from app.modules.news.news_schemas import NewsFeedResponse, DateMetadataSchema, NewsArticleResponse
+from app.modules.news.news_schemas import NewsFeedResponse, DateMetadataSchema, DailyNewsResponse
 from app.modules.news.news_services import NewsService
 
 router = APIRouter(prefix="/news")
@@ -46,7 +46,7 @@ async def get_available_news_dates(
 # Retrieve all news articles published on a specific UTC calendar date.
 @router.get(
     "/by-date",
-    response_model=list[NewsArticleResponse],
+    response_model=DailyNewsResponse,
 )
 async def get_news_by_date(
     date: date = Query(..., description="Article date in YYYY-MM-DD format"),
@@ -55,7 +55,7 @@ async def get_news_by_date(
         description="Article locale (defaults to ID)",
     ),
     service: NewsService = Depends(get_news_service),
-) -> list[NewsArticleResponse]:
+) -> DailyNewsResponse:
     """
     Retrieve all news articles published on a specific UTC calendar date,
     scoped to a locale.

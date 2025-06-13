@@ -1,4 +1,4 @@
-from datetime import datetime, date as DateType
+from datetime import datetime, date as date_type
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.modules.news.news_constants import ArticleLocale
@@ -60,7 +60,7 @@ class ArticleTitleData(BaseModel):
 class DateMetadataSchema(BaseModel):
     """Represents a single available news date along with total article counts."""
 
-    date: DateType = Field(
+    date: date_type = Field(
         ...,
         description="Published date for available news articles (YYYY-MM-DD)",
     )
@@ -88,3 +88,12 @@ class NewsArticleResponse(BaseModel):
     )
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class DailyNewsResponse(BaseModel):
+    """Envelope for a day's worth of news articles."""
+
+    date: date_type = Field(..., description="The queried UTC date (YYYY-MM-DD)")
+    items: list[NewsArticleResponse] = Field(
+        ..., description="Articles published on that date, newest first"
+    )

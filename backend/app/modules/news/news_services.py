@@ -12,7 +12,8 @@ from app.modules.news.news_schemas import (
     NewsFeedResponse, 
     NewsArticle,
     DateMetadataSchema,
-    NewsArticleResponse
+    NewsArticleResponse,
+    DailyNewsResponse
 )
 from app.modules.news.news_utils import (
     extract_original_url,
@@ -177,22 +178,23 @@ class NewsService:
             for row in rows
             if row.title is not None
         ]
-
+    
     def get_news_by_published_date(
         self,
         published_date: date,
         locale: ArticleLocale,
-    ) -> list[NewsArticleResponse]:
+    ) -> DailyNewsResponse:
         """
         Retrieve all articles published on a given UTC calendar date,
-        scoped to a locale.
+        scoped to a locale, wrapped in a daily envelope.
 
         Args:
             published_date: The UTC date to filter articles by.
             locale: Target locale (e.g. ArticleLocale.ID).
 
         Returns:
-            A list of NewsArticleResponse payloads, newest first.
+            A DailyNewsResponse containing the queried date and the
+            list of articles published that day, newest first.
         """
         start_date, end_date = build_utc_day_bounds(published_date)
 
@@ -202,7 +204,7 @@ class NewsService:
             locale=locale.value,
         )
 
-        return [
+        items = [
             NewsArticleResponse(
                 id=row.id,
                 title=row.title,
@@ -210,11 +212,13 @@ class NewsService:
                 published_at=row.published_at,
                 link=row.link,
                 locale=row.locale,
-                relevance_score=row.relevance_score,
-                relevance_reason=row.relevance_reason,
+                score=row.relevance_score,
+                reason=row.relevance_reason,
             )
             for row in rows
         ]
+
+        return DailyNewsResponse(date=published_date, items=items)
 
     # === UPDATE ===
     def update_news_scores(
