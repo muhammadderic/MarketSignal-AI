@@ -19,6 +19,12 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError<ApiErrorResponse>) => {
+    // Ignore intentional cancellations (React Query aborts, component unmounts,
+    // StrictMode double-invocation). A cancelled request is not a user-facing error.
+    if (axios.isCancel(error) || error.code === "ERR_CANCELED") {
+      return Promise.reject(error);
+    }
+
     if (error.response) {
       const errorData = error.response.data;
       const message = errorData?.message || 'An unexpected server error occurred.';

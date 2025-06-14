@@ -28,7 +28,7 @@ export interface UseArchiveCalendarResult {
 export const useArchiveCalendar = (
   options: UseArchiveCalendarOptions = {}
 ): UseArchiveCalendarResult => {
-  const { newsListPath = "/news", initialLocale = "UNASSIGNED"  } = options;
+  const { newsListPath = "/news", initialLocale = "ID"  } = options;
   const navigate = useNavigate();
 
   // Default to the current month (UD §2.1.2).

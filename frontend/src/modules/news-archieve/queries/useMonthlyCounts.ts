@@ -13,7 +13,7 @@ import { isValidMonth } from "../utils/date";
 export const useMonthlyCounts = (params: MonthlyCountsRequest | null) => {
   return useQuery({
     queryKey: newsArchiveKeys.monthlyCounts(
-      params ?? { month: "", locale: "UNASSIGNED" }
+      params ?? { month: "", locale: "ID" }
     ),
     queryFn: async ({ signal }) => {
       // Caller guarantees non-null via `enabled`.
