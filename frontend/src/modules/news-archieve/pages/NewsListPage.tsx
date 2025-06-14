@@ -1,9 +1,11 @@
 import { useEffect } from "react";
+
 import { useNewsListPage } from "../hooks/useNewsListPage";
 import { NewsList } from "../components/NewsList";
+import { NewsPagination } from "../components/NewsPagination";
 
 export const NewsListPage = () => {
-  const { date, newsQuery, reconcileCounts } = useNewsListPage();
+  const { date, newsQuery, pagination, setPage, reconcileCounts } = useNewsListPage();
 
   // Reconcile counts when a previously-badged date returns no items (UD §2.2.16).
   const isEmptyResult =
@@ -48,8 +50,16 @@ export const NewsListPage = () => {
         <p className="text-gray-500">No news available for this date.</p>
       )}
 
-      {newsQuery.isSuccess && newsQuery.data.items.length > 0 && (
-        <NewsList items={newsQuery.data.items} />
+      {newsQuery.isSuccess && pagination.totalItems > 0 && (
+        <>
+          <NewsList items={pagination.pageItems} />
+          <NewsPagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            onPageChange={setPage}
+          />
+        </>
       )}
     </main>
   );

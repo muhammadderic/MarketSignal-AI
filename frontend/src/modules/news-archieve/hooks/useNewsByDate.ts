@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import { minutes, seconds } from "@shared/utils/time";
+
 import { newsArchiveService } from "../services/newsArchiveService";
 import type { NewsByDateRequest } from "../types";
 import { isValidDate } from "../utils/date";

@@ -1,6 +1,7 @@
+import type { Locale } from "@shared/types";
+
 import { useArchiveCalendar } from "../hooks/useArchiveCalendar";
 import { ArchiveCalendar } from "../components/ArchiveCalendar";
-import type { Locale } from "@shared/types";
 
 const LOCALES: Locale[] = ["ID", "US", "GLOBAL", "UNASSIGNED"];
 

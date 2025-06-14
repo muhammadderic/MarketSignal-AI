@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { minutes } from "@shared/utils/time";
+
 import { newsArchiveService } from "../services/newsArchiveService";
 import { newsArchiveKeys } from "./queryKeys";
 import type { MonthlyCountsRequest } from "../types";
