@@ -4,20 +4,16 @@ from datetime import date, datetime, timedelta, timezone
 from fastapi import HTTPException, status
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
-from app.modules.news.news_constants import ArticleLocale
 from app.modules.news.news_schemas import (
     ArticleTitleData,
     NewsFeedResponse, 
     NewsArticle,
-    NewsArticleResponse,
-    DailyNewsResponse
 )
 from app.modules.news.news_utils import (
     extract_original_url,
     is_data_fresh,
     get_max_age_cutoff,
     validate_locale,
-    build_utc_day_bounds
 )
 from app.modules.news.news_repo import NewsRepository
 from app.modules.news_scoring.ns_schemas import BatchScoringResponse
@@ -170,47 +166,6 @@ class NewsService:
             if row.title is not None
         ]
     
-    def get_news_by_published_date(
-        self,
-        published_date: date,
-        locale: ArticleLocale,
-    ) -> DailyNewsResponse:
-        """
-        Retrieve all articles published on a given UTC calendar date,
-        scoped to a locale, wrapped in a daily envelope.
-
-        Args:
-            published_date: The UTC date to filter articles by.
-            locale: Target locale (e.g. ArticleLocale.ID).
-
-        Returns:
-            A DailyNewsResponse containing the queried date and the
-            list of articles published that day, newest first.
-        """
-        start_date, end_date = build_utc_day_bounds(published_date)
-
-        rows = self.repo.get_all_by_published_date(
-            start_date=start_date,
-            end_date=end_date,
-            locale=locale.value,
-        )
-
-        items = [
-            NewsArticleResponse(
-                id=row.id,
-                title=row.title,
-                source=row.source,
-                published_at=row.published_at,
-                link=row.link,
-                locale=row.locale,
-                score=row.relevance_score,
-                reason=row.relevance_reason,
-            )
-            for row in rows
-        ]
-
-        return DailyNewsResponse(date=published_date, items=items)
-
     # === UPDATE ===
     def update_news_scores(
         self,

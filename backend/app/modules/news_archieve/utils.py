@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, time
 
 _MONTH_PATTERN = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
@@ -26,4 +26,23 @@ def parse_month(month: str) -> tuple[datetime, datetime]:
     else:
         end = datetime(year, mon + 1, 1, tzinfo=timezone.utc)
 
+    return start, end
+
+
+def build_utc_day_bounds(
+    published_date: date,
+) -> tuple[datetime, datetime]:
+    """
+    Build a half-open UTC datetime range covering a full calendar day.
+
+    Args:
+        published_date: The UTC calendar date to bound.
+
+    Returns:
+        A tuple (start, end) where:
+            - start = published_date at 00:00:00 UTC (inclusive)
+            - end   = published_date at 23:59:59 UTC (inclusive)
+    """
+    start = datetime.combine(published_date, time.min, tzinfo=timezone.utc)
+    end = datetime.combine(published_date, time.max, tzinfo=timezone.utc)
     return start, end

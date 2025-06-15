@@ -5,10 +5,10 @@ from typing import Sequence
 from fastapi import HTTPException, status
 
 from app.integrations.adapters import GoogleRSSAdapter
-from app.modules.news.news_constants import ArticleLocale
-from app.modules.news_archieve.schemas import ArchiveCountItem, ArchiveCountsResponse
+from app.modules.news_archieve.constants import ArticleLocale
+from app.modules.news_archieve.schemas import ArchiveCountItem, ArchiveCountsResponse, DailyNewsResponse, NewsArticleResponse
 from app.modules.news_archieve.cache import archive_counts_cache
-from app.modules.news_archieve.utils import parse_month
+from app.modules.news_archieve.utils import parse_month, build_utc_day_bounds
 from app.modules.news_archieve.repositories import ArchiveCountRow, NewsArchieveRepo
 
 logger = logging.getLogger(__name__)
@@ -85,6 +85,47 @@ class NewsArchieveService:
         self._safe_cache_set(cache_key, response)
 
         return response
+
+    def get_news_by_published_date(
+        self,
+        published_date: date,
+        locale: ArticleLocale,
+    ) -> DailyNewsResponse:
+        """
+        Retrieve all articles published on a given UTC calendar date,
+        scoped to a locale, wrapped in a daily envelope.
+
+        Args:
+            published_date: The UTC date to filter articles by.
+            locale: Target locale (e.g. ArticleLocale.ID).
+
+        Returns:
+            A DailyNewsResponse containing the queried date and the
+            list of articles published that day, newest first.
+        """
+        start_date, end_date = build_utc_day_bounds(published_date)
+
+        rows = self.repo.get_all_by_published_date(
+            start_date=start_date,
+            end_date=end_date,
+            locale=locale.value,
+        )
+
+        items = [
+            NewsArticleResponse(
+                id=row.id,
+                title=row.title,
+                source=row.source,
+                published_at=row.published_at,
+                link=row.link,
+                locale=row.locale,
+                score=row.relevance_score,
+                reason=row.relevance_reason,
+            )
+            for row in rows
+        ]
+
+        return DailyNewsResponse(date=published_date, items=items)
 
     # === PRIVATE METHODS ===
 

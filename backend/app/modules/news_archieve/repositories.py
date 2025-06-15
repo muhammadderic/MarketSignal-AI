@@ -1,12 +1,12 @@
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import Sequence
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, Row
 from sqlalchemy.orm import Session
 
 from app.modules.news.models import NewsArticleData
-from app.modules.news.news_constants import ArticleLocale
+from app.modules.news_archieve.constants import ArticleLocale
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +14,18 @@ logger = logging.getLogger(__name__)
 # Row type aliases (module-level, per conventions)
 ArchiveCountRow = tuple[datetime, int]
 
+NewsArticleRecordRow = Row[
+    tuple[
+        int,
+        str | None,
+        str,
+        datetime,
+        str | None,
+        ArticleLocale,
+        int | None,
+        str | None,
+    ]
+]
 
 class NewsArchieveRepo:
     """Persistence operations for news articles."""
@@ -21,6 +33,7 @@ class NewsArchieveRepo:
     def __init__(self, db: Session):
         self.db = db
 
+    # === READ ===
     def get_archive_counts(
         self,
         *,
@@ -58,6 +71,53 @@ class NewsArchieveRepo:
             normalized.append((d, total))
         return normalized
 
+    def get_all_by_published_date(
+        self,
+        start_date: datetime,
+        locale: ArticleLocale,
+        end_date: datetime | None = None,
+    ) -> Sequence[NewsArticleRecordRow]:
+        """
+        Fetch all news articles whose `published_at` falls within the
+        given UTC calendar date, scoped to a locale.
+
+        Uses an inclusive [00:00:00, 23:59:59] UTC range so the query
+        remains sargable against `ix_news_article_data_published_at`.
+
+        Args:
+            start_date
+            end_date
+            locale: Locale string (e.g. "ID") to scope results.
+
+        Returns:
+            Sequence of projected rows carrying the full article payload,
+            newest first.
+        """
+        if end_date is None:
+            end_date = datetime.now(timezone.utc).replace(tzinfo=None)
+
+        stmt = (
+            select(
+                NewsArticleData.id,
+                NewsArticleData.title,
+                NewsArticleData.source,
+                NewsArticleData.published_at,
+                NewsArticleData.link,
+                NewsArticleData.locale,
+                NewsArticleData.relevance_score,
+                NewsArticleData.relevance_reason,
+            )
+            .where(
+                NewsArticleData.published_at >= start_date,
+                NewsArticleData.published_at <= end_date,
+                NewsArticleData.locale == locale,
+            )
+            .order_by(NewsArticleData.published_at.desc())
+        )
+
+        return self.db.execute(stmt).all()
+
+    # === CREATE ===
     def insert_articles(self, articles: list[dict]) -> None:
         """
         Bulk-insert adapted article dicts.

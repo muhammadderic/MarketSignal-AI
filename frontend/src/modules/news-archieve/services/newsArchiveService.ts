@@ -11,7 +11,6 @@ import { normalizeLocale, normalizeScore } from "../utils/score";
 import { isValidDate, isValidMonth } from "../utils/date";
 
 const API_BASE = "/api/v1/news-archieve";
-const API_BASE_OLD = "/api/v1/news";
 
 /**
  * Normalize a raw news item so the rest of the app can trust the shape.
@@ -59,7 +58,7 @@ export const newsArchiveService = {
       throw new Error(`Invalid date format: ${params.date}. Expected YYYY-MM-DD.`);
     }
 
-    const endpoint = `${API_BASE_OLD}/by-date`;
+    const endpoint = `${API_BASE}/by-date`;
 
     const { data } = await apiClient.get<NewsByDateResponse>(endpoint, {
       params: { date: params.date },
