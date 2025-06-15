@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useNewsListPage } from "../hooks/useNewsListPage";
 import { NewsList } from "../components/NewsList";
 import { NewsPagination } from "../components/NewsPagination";
+import { BackBtn } from "@shared/components/buttons";
 
 export const NewsListPage = () => {
   const { date, newsQuery, pagination, setPage, reconcileCounts } = useNewsListPage();
@@ -25,6 +26,8 @@ export const NewsListPage = () => {
 
   return (
     <main className="max-w-3xl mx-auto p-4">
+      <BackBtn />
+      
       <h1 className="text-xl font-bold mb-4">News for {date}</h1>
 
       {newsQuery.isLoading && (
