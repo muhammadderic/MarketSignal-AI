@@ -1,9 +1,7 @@
 import logging
 from calendar import timegm
 from datetime import date, datetime, timedelta, timezone
-from typing import Sequence
 from fastapi import HTTPException, status
-from cachetools.func import ttl_cache
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
 from app.modules.news.news_constants import ArticleLocale
@@ -11,7 +9,6 @@ from app.modules.news.news_schemas import (
     ArticleTitleData,
     NewsFeedResponse, 
     NewsArticle,
-    DateMetadataSchema,
     NewsArticleResponse,
     DailyNewsResponse
 )
@@ -22,7 +19,7 @@ from app.modules.news.news_utils import (
     validate_locale,
     build_utc_day_bounds
 )
-from app.modules.news.news_repo import NewsRepository, NewsDateSummaryRow
+from app.modules.news.news_repo import NewsRepository
 from app.modules.news_scoring.ns_schemas import BatchScoringResponse
 
 logger = logging.getLogger(__name__)
@@ -39,12 +36,6 @@ class NewsService:
         self.client = client
     
     # === READ ===
-    @ttl_cache(maxsize=128, ttl=600)
-    def get_available_dates(self) -> list[DateMetadataSchema]:
-        raw_rows = self.repo.get_distinct_published_dates()
-        transformed_data = self._transform_date_summary_rows(raw_rows)
-        return [DateMetadataSchema(**item) for item in transformed_data]
-
     def get_business_news(self, locale: str = "ID") -> NewsFeedResponse:
         """
         Fetch and filter business news from Google RSS feed with caching strategy.
@@ -287,12 +278,3 @@ class NewsService:
             )
 
         return filtered_entries
-
-    def _transform_date_summary_rows(
-        self, rows: Sequence[NewsDateSummaryRow]
-    ) -> list[dict[str, any]]:
-        """Private helper to convert database Row tuples into API-ready dictionaries."""
-        return [
-            {"date": row.news_date, "total_articles": row.total_articles}
-            for row in rows
-        ]

@@ -57,20 +57,6 @@ class ArticleTitleData(BaseModel):
     title: str = Field(..., description="Article title")
 
 
-class DateMetadataSchema(BaseModel):
-    """Represents a single available news date along with total article counts."""
-
-    date: date_type = Field(
-        ...,
-        description="Published date for available news articles (YYYY-MM-DD)",
-    )
-    total_articles: int = Field(
-        ..., ge=0, description="Total count of articles published on this date"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class NewsArticleResponse(BaseModel):
     """Full news article payload returned to the client."""
 

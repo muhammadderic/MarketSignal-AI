@@ -1,6 +1,6 @@
 from datetime import datetime, date, time, timedelta, timezone
 from typing import Sequence
-from sqlalchemy import Row, select, func, bindparam, update, desc
+from sqlalchemy import Row, select, func, bindparam, update
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.sqlite import insert
 
@@ -20,8 +20,6 @@ NewsArticleRecordRow = Row[
         str | None,
     ]
 ]
-NewsDateSummaryRow = Row[tuple[str, int]]
-
 
 class NewsRepository:
     def __init__(self, db: Session):
@@ -147,18 +145,6 @@ class NewsRepository:
                 NewsArticleData.published_at < end,
             )
             .order_by(NewsArticleData.id)
-        )
-        return self.db.execute(stmt).all()
-
-    def get_distinct_published_dates(self) -> Sequence[NewsDateSummaryRow]:
-        """Queries database for unique dates and their respective article counts."""
-        stmt = (
-            select(
-                func.date(NewsArticleData.published_at).label("news_date"),
-                func.count(NewsArticleData.id).label("total_articles"),
-            )
-            .group_by(func.date(NewsArticleData.published_at))
-            .order_by(desc("news_date"))
         )
         return self.db.execute(stmt).all()
 
