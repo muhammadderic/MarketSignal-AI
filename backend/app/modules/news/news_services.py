@@ -113,58 +113,6 @@ class NewsService:
             articles=articles_schema,
             total_count=len(articles_schema)
         )
-
-    def get_titles_by_ids(self, article_ids: list[int]) -> list[ArticleTitleData]:
-        """
-        Retrieve article id-title pairs for the given IDs, skipping null titles.
-        
-        Args:
-            article_ids: List of article IDs to look up.
-            
-        Returns:
-            List of ArticleTitleData schemas for articles with non-null titles.
-        """
-        if not article_ids:
-            return []
-        
-        rows = self.repo.get_id_title_pairs_by_ids(article_ids)
-        
-        return [
-            ArticleTitleData(id=row.id, title=row.title)
-            for row in rows
-            if row.title is not None
-        ]
-
-    def get_titles_by_published_date(
-        self,
-        date: date | None,
-    ) -> list[ArticleTitleData]:
-        """
-        Retrieve (id, title) pairs for articles published on the given
-        UTC calendar date.
-
-        Args:
-            date: The UTC published date to filter by. If None, returns
-                an empty list (defensive short-circuit).
-
-        Returns:
-            A list of ArticleTitleData. Empty list if no date is provided,
-            if the repository returns no rows, or if all rows have a null
-            title.
-        """
-        if not date:
-            return []
-
-        rows = self.repo.get_id_title_pairs_by_published_date(date)
-
-        if not rows:
-            return []
-
-        return [
-            ArticleTitleData(id=row.id, title=row.title)
-            for row in rows
-            if row.title is not None
-        ]
     
     # === UPDATE ===
     def update_news_scores(
