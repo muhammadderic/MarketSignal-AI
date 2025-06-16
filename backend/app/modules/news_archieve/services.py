@@ -1,15 +1,14 @@
 import logging
-from datetime import date
-from typing import Sequence
+from datetime import date, datetime, timezone, timedelta
 
 from fastapi import HTTPException, status
 
 from app.integrations.adapters import GoogleRSSAdapter
 from app.modules.news_archieve.constants import ArticleLocale
-from app.modules.news_archieve.schemas import ArchiveCountItem, ArchiveCountsResponse, DailyNewsResponse, NewsArticleResponse
 from app.modules.news_archieve.cache import archive_counts_cache
+from app.modules.news_archieve.schemas import ArchiveCountItem, ArchiveCountsResponse, DailyNewsResponse, NewsArticleResponse
 from app.modules.news_archieve.utils import parse_month, build_utc_day_bounds
-from app.modules.news_archieve.repositories import ArchiveCountRow, NewsArchieveRepo
+from app.modules.news_archieve.repositories import NewsArchieveRepo
 
 logger = logging.getLogger(__name__)
 
@@ -56,16 +55,32 @@ class NewsArchieveService:
 
         logger.info("Archive counts cache MISS for %s", cache_key)
 
-        # 3. DB query
-        rows = self._query_counts(locale=locale, start=start, end=end)
+        # 3. Query daily archive counts and the newest publication timestamp.
+        rows, newest_published_at = self.repo.get_archive_counts_with_latest_timestamp(locale=locale, start=start, end=end)
 
-        # 4. Empty → ingest from RSS, then re-query
+        # 4. Determine whether existing archive data is stale.
+        should_ingest = False
+
+        if newest_published_at is not None:
+            # Refresh the archive when the newest publication is older than 5 hours.
+            should_ingest = not self._is_archive_fresh(newest_published_at)
+
+        # Also ingest when no archive counts exist for the requested month.
         if not rows:
-            logger.info(
-                "No rows for month=%s locale=%s; ingesting from RSS", month, locale.value
-            )
+            should_ingest = True
+
+        if should_ingest:
+            logger.info("Refreshing archive counts for month=%s locale=%s", month, locale.value)
+
+            # Ingest RSS articles before retrieving the updated archive counts.
             self._ingest_from_rss(locale=locale)
-            rows = self._query_counts(locale=locale, start=start, end=end)
+
+            # Re-query daily counts after ingestion.
+            rows = self.repo.get_archive_counts(
+                locale=locale,
+                start=start,
+                end=end,
+            )
 
         # 5. Build response (exclude zero-count dates — grouped query already does)
         counts = [
@@ -128,31 +143,6 @@ class NewsArchieveService:
         return DailyNewsResponse(date=published_date, items=items)
 
     # === PRIVATE METHODS ===
-
-    def _query_counts(
-        self,
-        *,
-        locale: ArticleLocale,
-        start,
-        end,
-    ) -> Sequence[ArchiveCountRow]:
-        try:
-            return self.repo.get_archive_counts(locale=locale, start=start, end=end)
-        except HTTPException:
-            raise
-        except Exception as exc:
-            logger.error(
-                "DB failure while querying archive counts (locale=%s, %s..%s): %s",
-                locale.value,
-                start,
-                end,
-                exc,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to retrieve archive counts.",
-            ) from exc
-
     def _ingest_from_rss(self, *, locale: ArticleLocale) -> None:
         try:
             articles = self.rss_adapter.to_articles(locale=locale.value)
@@ -163,6 +153,22 @@ class NewsArchieveService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to ingest news articles.",
             ) from exc
+
+    def _is_archive_fresh(
+        self,
+        newest_published_at: datetime | None,
+    ) -> bool:
+        if newest_published_at is None:
+            return False
+
+        # Treat naive datetimes as UTC.
+        if newest_published_at.tzinfo is None:
+            newest_published_at = newest_published_at.replace(
+                tzinfo=timezone.utc
+            )
+
+        age = datetime.now(timezone.utc) - newest_published_at
+        return age <= timedelta(hours=5)
 
     @staticmethod
     def _safe_cache_get(key) -> ArchiveCountsResponse | None:
@@ -178,3 +184,4 @@ class NewsArchieveService:
             archive_counts_cache[key] = value
         except Exception as exc:
             logger.warning("Cache write failure for key=%s: %s", key, exc)
+            

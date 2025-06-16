@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 # Row type aliases (module-level, per conventions)
-ArchiveCountRow = tuple[datetime, int]
+ArchiveCountRow = tuple[date, int]
 
 NewsArticleRecordRow = Row[
     tuple[
@@ -70,6 +70,52 @@ class NewsArchieveRepo:
                 d = datetime.strptime(str(day_value)[:10], "%Y-%m-%d").date()
             normalized.append((d, total))
         return normalized
+
+    def get_archive_counts_with_latest_timestamp(
+        self,
+        *,
+        locale: ArticleLocale,
+        start: datetime,
+        end: datetime,
+    ) -> tuple[Sequence[ArchiveCountRow], datetime | None]:
+        day_expr = func.date(NewsArticleData.published_at)
+
+        newest_stmt = (
+            select(func.max(NewsArticleData.published_at))
+            .where(
+                NewsArticleData.locale == locale,
+                NewsArticleData.published_at >= start,
+                NewsArticleData.published_at < end,
+            )
+            .scalar_subquery()
+        )
+
+        stmt = (
+            select(
+                day_expr.label("day"),
+                func.count(NewsArticleData.id).label("total"),
+                newest_stmt.label("newest_published_at"),
+            )
+            .where(
+                NewsArticleData.locale == locale,
+                NewsArticleData.published_at >= start,
+                NewsArticleData.published_at < end,
+            )
+            .group_by(day_expr)
+            .order_by(day_expr.desc())
+        )
+
+        rows = self.db.execute(stmt).all()
+
+        if not rows:
+            return [], None
+
+        daily_counts = [
+            (date.fromisoformat(str(row.day)[:10]), row.total)
+            for row in rows
+        ]
+
+        return daily_counts, rows[0].newest_published_at
 
     def get_all_by_published_date(
         self,
