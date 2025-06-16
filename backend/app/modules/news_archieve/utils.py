@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timezone, date, time
+from urllib.parse import parse_qs, urlparse
 
 _MONTH_PATTERN = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
@@ -46,3 +47,12 @@ def build_utc_day_bounds(
     start = datetime.combine(published_date, time.min, tzinfo=timezone.utc)
     end = datetime.combine(published_date, time.max, tzinfo=timezone.utc)
     return start, end
+
+
+def extract_original_url(google_news_link: str) -> str:
+    """
+    Extract the original article URL from Google News redirect link.
+    """
+    parsed = urlparse(google_news_link)
+    params = parse_qs(parsed.query)
+    return params.get('url', [google_news_link])[0]

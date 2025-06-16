@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, date, timezone
 from typing import Sequence
 
-from sqlalchemy import func, select, Row
+from sqlalchemy import func, select, insert, Row
 from sqlalchemy.orm import Session
 
 from app.modules.news.models import NewsArticleData
@@ -165,19 +165,14 @@ class NewsArchieveRepo:
 
     # === CREATE ===
     def insert_articles(self, articles: list[dict]) -> None:
-        """
-        Bulk-insert adapted article dicts.
-        Uses `INSERT ... ON CONFLICT DO NOTHING` semantics to satisfy the
-        unique constraint on (title, source, published_at, locale).
-        """
+        """Bulk-insert articles, ignoring duplicate identities."""
         if not articles:
             return
 
-        from sqlalchemy.dialects.postgresql import insert as pg_insert
-
-        stmt = pg_insert(NewsArticleData).values(articles)
+        stmt = insert(NewsArticleData).values(articles)
         stmt = stmt.on_conflict_do_nothing(
-            constraint="uq_news_article_identity",
+            index_elements=["title", "source", "published_at", "locale"],
         )
+
         self.db.execute(stmt)
         self.db.commit()

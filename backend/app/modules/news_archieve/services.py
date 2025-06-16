@@ -1,13 +1,14 @@
 import logging
 from datetime import date, datetime, timezone, timedelta
+from calendar import timegm
 
 from fastapi import HTTPException, status
 
 from app.integrations.adapters import GoogleRSSAdapter
-from app.modules.news_archieve.constants import ArticleLocale
+from app.modules.news_archieve.constants import ArticleLocale, ARCHIVE_FRESHNESS_THRESHOLD_HOURS
 from app.modules.news_archieve.cache import archive_counts_cache
 from app.modules.news_archieve.schemas import ArchiveCountItem, ArchiveCountsResponse, DailyNewsResponse, NewsArticleResponse
-from app.modules.news_archieve.utils import parse_month, build_utc_day_bounds
+from app.modules.news_archieve.utils import parse_month, build_utc_day_bounds, extract_original_url
 from app.modules.news_archieve.repositories import NewsArchieveRepo
 
 logger = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ class NewsArchieveService:
             logger.info("Refreshing archive counts for month=%s locale=%s", month, locale.value)
 
             # Ingest RSS articles before retrieving the updated archive counts.
-            self._ingest_from_rss(locale=locale)
+            self._ingest_from_rss(locale=locale, latest_date=newest_published_at)
 
             # Re-query daily counts after ingestion.
             rows = self.repo.get_archive_counts(
@@ -143,10 +144,28 @@ class NewsArchieveService:
         return DailyNewsResponse(date=published_date, items=items)
 
     # === PRIVATE METHODS ===
-    def _ingest_from_rss(self, *, locale: ArticleLocale) -> None:
+    def _ingest_from_rss(self, *, locale: ArticleLocale, latest_date: datetime) -> None:
         try:
             articles = self.rss_adapter.to_articles(locale=locale.value)
-            self.repo.insert_articles(articles)
+
+            # Filter entries and extract only the fields required by the database.
+            filtered_articles = self._filter_recent_news(
+                feed_entries=articles,
+                latest_date=latest_date,
+            )
+
+            # Add locale and default scoring fields before bulk insertion.
+            article_dicts = [
+                {
+                    **article,
+                    "locale": locale.value,
+                    "relevance_score": None,
+                    "relevance_reason": None,
+                }
+                for article in filtered_articles
+            ]
+
+            self.repo.insert_articles(article_dicts)
         except Exception as exc:
             logger.error("RSS ingestion failed for locale=%s: %s", locale.value, exc)
             raise HTTPException(
@@ -168,7 +187,45 @@ class NewsArchieveService:
             )
 
         age = datetime.now(timezone.utc) - newest_published_at
-        return age <= timedelta(hours=5)
+        return age <= timedelta(hours=ARCHIVE_FRESHNESS_THRESHOLD_HOURS)
+
+    def _filter_recent_news(
+        self,
+        feed_entries: list[dict[str, any]],
+        latest_date: datetime | None = None,
+    ) -> list[dict[str, any]]:
+        now = datetime.now(timezone.utc)
+        cutoff = latest_date or (now - timedelta(days=1))
+
+        filtered_entries = []
+
+        for entry in feed_entries:
+            published_parsed = entry.get("published_parsed")
+
+            # Skip entries without a valid parsed publication date.
+            if not published_parsed:
+                continue
+
+            published_at = datetime.fromtimestamp(
+                timegm(published_parsed),
+                tz=timezone.utc,
+            )
+
+            if not cutoff <= published_at <= now:
+                continue
+
+            raw_link = entry.get("link")
+
+            filtered_entries.append(
+                {
+                    "title": entry["title"],
+                    "source": entry["source"]["title"],
+                    "published_at": published_at,
+                    "link": extract_original_url(raw_link) if raw_link else None,
+                }
+            )
+
+        return filtered_entries
 
     @staticmethod
     def _safe_cache_get(key) -> ArchiveCountsResponse | None:
@@ -184,4 +241,3 @@ class NewsArchieveService:
             archive_counts_cache[key] = value
         except Exception as exc:
             logger.warning("Cache write failure for key=%s: %s", key, exc)
-            
