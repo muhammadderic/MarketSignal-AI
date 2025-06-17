@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
 import type { Locale } from "@shared/types";
+import { useNewsScoring } from "@modules/news-scoring/hooks/useNewsScoring";
 
 import { useNewsByDate } from "../queries/useNewsByDate";
 import { useMonthlyCounts } from "../queries/useMonthlyCounts";
@@ -38,6 +39,9 @@ export const useNewsListPage = () => {
     const items = newsQuery.data?.items ?? [];
     return paginate(items, parsePage(pageParam));
   }, [newsQuery.data, pageParam]);
+
+  // Selection + scoring orchestration.
+  const scoring = useNewsScoring();
 
   /** Write the page back to the URL; reset to 1 if the date/locale changes. */
   const setPage = useCallback(
@@ -77,5 +81,6 @@ export const useNewsListPage = () => {
     pagination,
     setPage,
     reconcileCounts,
+    scoring
   };
 };

@@ -1,12 +1,17 @@
 import { useEffect } from "react";
 
+import { BackBtn } from "@shared/components/buttons";
+
 import { useNewsListPage } from "../hooks/useNewsListPage";
 import { NewsList } from "../components/NewsList";
 import { NewsPagination } from "../components/NewsPagination";
-import { BackBtn } from "@shared/components/buttons";
 
 export const NewsListPage = () => {
-  const { date, newsQuery, pagination, setPage, reconcileCounts } = useNewsListPage();
+  const { date, newsQuery, pagination, setPage, reconcileCounts, scoring } = useNewsListPage();
+
+  const {
+    selection,
+  } = scoring;
 
   // Reconcile counts when a previously-badged date returns no items (UD §2.2.16).
   const isEmptyResult =
@@ -55,7 +60,12 @@ export const NewsListPage = () => {
 
       {newsQuery.isSuccess && pagination.totalItems > 0 && (
         <>
-          <NewsList items={pagination.pageItems} />
+          <NewsList 
+            items={pagination.pageItems}
+            selectedIds={selection.selectedIds}
+            maxReached={selection.maxReached}
+            onToggle={selection.toggle}
+          />
           <NewsPagination
             page={pagination.page}
             totalPages={pagination.totalPages}
