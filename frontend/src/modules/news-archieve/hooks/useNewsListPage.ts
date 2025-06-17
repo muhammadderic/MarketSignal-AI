@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router";
 
 import type { Locale } from "@shared/types";
 
-import { useNewsByDate } from "./useNewsByDate";
+import { useNewsByDate } from "../queries/useNewsByDate";
 import { useMonthlyCounts } from "../queries/useMonthlyCounts";
 import { toArchiveMonth } from "../utils/date";
 import { isValidDate } from "../utils/date";

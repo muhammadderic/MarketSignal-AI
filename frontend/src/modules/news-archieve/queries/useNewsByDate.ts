@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import { minutes, seconds } from "@shared/utils/time";
 
-import { newsArchiveService } from "../services/newsArchiveService";
 import type { NewsByDateRequest } from "../types";
+import { newsArchiveKeys } from "./queryKeys";
+import { newsArchiveService } from "../services/newsArchiveService";
 import { isValidDate } from "../utils/date";
-import { newsArchiveKeys } from "../queries/queryKeys";
 
 /**
  * Fetch the stored news list for a selected date.
