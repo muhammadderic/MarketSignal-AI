@@ -1,5 +1,6 @@
+import { useMemo } from "react";
 import { useNewsSelectionStore } from "../store/newsSelectionStore";
-import { SELECTION_MAX } from "../types";
+import { SELECTION_MAX, SELECTION_MIN } from "../types";
 
 export const useNewsSelection = () => {
   const selectedIds = useNewsSelectionStore((s) => s.selectedIds);
@@ -7,11 +8,20 @@ export const useNewsSelection = () => {
 
   const count = selectedIds.size;
 
+  const canSubmit = useMemo(
+    () => count >= SELECTION_MIN && count <= SELECTION_MAX,
+    [count]
+  );
+
   const maxReached = count >= SELECTION_MAX;
 
   return {
     selectedIds,
+    count,
+    canSubmit,
     maxReached,
+    minSelection: SELECTION_MIN,
+    maxSelection: SELECTION_MAX,
     toggle,
   }
 }

@@ -1,3 +1,4 @@
+import { useScoreNews } from "../queries/useScoreNews";
 import { useNewsSelection } from "./useNewsSelection";
 
 /**
@@ -8,8 +9,10 @@ import { useNewsSelection } from "./useNewsSelection";
  */
 export const useNewsScoring = () => {
   const selection = useNewsSelection();
+  const mutation = useScoreNews();
 
   return {
     selection,
+    isSubmitting: mutation.isPending,
   }
 }

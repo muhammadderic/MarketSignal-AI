@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { BackBtn } from "@shared/components/buttons";
+import { ScoreSelectionBar } from "@modules/news-scoring/components/ScoreSelectionBar";
 
 import { useNewsListPage } from "../hooks/useNewsListPage";
 import { NewsList } from "../components/NewsList";
@@ -11,6 +12,7 @@ export const NewsListPage = () => {
 
   const {
     selection,
+    isSubmitting,
   } = scoring;
 
   // Reconcile counts when a previously-badged date returns no items (UD §2.2.16).
@@ -71,6 +73,14 @@ export const NewsListPage = () => {
             totalPages={pagination.totalPages}
             totalItems={pagination.totalItems}
             onPageChange={setPage}
+          />
+          <ScoreSelectionBar 
+            count={selection.count}
+            minSelection={selection.minSelection}
+            maxSelection={selection.maxSelection}
+            canSubmit={selection.canSubmit}
+            isSubmitting={isSubmitting}
+            onSubmit={() => console.log("Submit")}
           />
         </>
       )}
