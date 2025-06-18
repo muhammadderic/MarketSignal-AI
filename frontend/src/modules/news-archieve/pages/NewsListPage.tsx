@@ -81,6 +81,7 @@ export const NewsListPage = () => {
             canSubmit={selection.canSubmit}
             isSubmitting={isSubmitting}
             onSubmit={() => console.log("Submit")}
+            onClear={selection.clear}
           />
         </>
       )}

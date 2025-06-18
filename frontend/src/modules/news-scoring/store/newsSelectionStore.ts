@@ -9,6 +9,8 @@ interface NewsSelectionState {
 
   /** Start/continue selection for a given date; resets if date differs. */
   toggle: (id: string) => void;
+  /** Remove multiple IDs. */
+  clear: () => void;
 }
 
 export const useNewsSelectionStore = create<NewsSelectionState>((set, get) => ({
@@ -26,4 +28,6 @@ export const useNewsSelectionStore = create<NewsSelectionState>((set, get) => ({
     }
     set({ selectedIds: next });
   },
+
+  clear: () => set({ selectedIds: new Set<string>() }),
 }))
