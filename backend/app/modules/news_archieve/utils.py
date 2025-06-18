@@ -2,6 +2,8 @@ import re
 from datetime import datetime, timezone, date, time
 from urllib.parse import parse_qs, urlparse
 
+from app.modules.news_archieve.schemas import ArticleTitleData
+
 _MONTH_PATTERN = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 
@@ -56,3 +58,33 @@ def extract_original_url(google_news_link: str) -> str:
     parsed = urlparse(google_news_link)
     params = parse_qs(parsed.query)
     return params.get('url', [google_news_link])[0]
+
+
+def sanitize_article_titles(
+    articles: list[ArticleTitleData]
+) -> list[ArticleTitleData]:
+    """
+    Strip trailing source attribution from article titles.
+    
+    Google News RSS titles are formatted as "<Headline> - <Source>".
+    This removes the " - <Source>" suffix so downstream LLM scoring
+    focuses on the headline only.
+    
+    Args:
+        articles: List of ArticleTitleData with source-suffixed titles.
+        
+    Returns:
+        New list of ArticleTitleData with sanitized titles.
+    """
+    sanitized = []
+    for article in articles:
+        # Split on the last " - " separator; keep only the headline part
+        title = article.title
+        if " - " in title:
+            title = title.rsplit(" - ", 1)[0].strip()
+        
+        sanitized.append(
+            ArticleTitleData(id=article.id, title=title)
+        )
+    
+    return sanitized

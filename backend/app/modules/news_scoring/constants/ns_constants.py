@@ -4,5 +4,5 @@
 #
 # - Below MIN: not enough signal to justify an LLM batch call.
 # - Above MAX: protect against runaway LLM cost / context explosion.
-NEWS_SCORING_MIN_TITLE_PAIRS: int = 5
-NEWS_SCORING_MAX_TITLE_PAIRS: int = 10
+NEWS_SCORING_MIN_TITLE_PAIRS: int = 2
+NEWS_SCORING_MAX_TITLE_PAIRS: int = 3

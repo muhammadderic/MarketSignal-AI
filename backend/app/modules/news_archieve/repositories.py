@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, date, timezone
 from typing import Sequence
 
-from sqlalchemy import func, select, insert, Row
+from sqlalchemy import func, select, insert, bindparam, update, Row
 from sqlalchemy.orm import Session
 
 from app.modules.news.models import NewsArticleData
@@ -163,6 +163,29 @@ class NewsArchieveRepo:
 
         return self.db.execute(stmt).all()
 
+    def get_id_title_pairs_by_ids(
+        self, 
+        article_ids: list[int]
+    ) -> Sequence[Row[tuple[int, str | None]]]:
+        """
+        Fetch (id, title) pairs for the given article IDs.
+        
+        Args:
+            article_ids: List of article IDs to fetch.
+            
+        Returns:
+            Sequence of rows with named access (.id, .title).
+            Missing IDs are excluded. Titles may be None.
+        """
+        if not article_ids:
+            return []
+        
+        stmt = (
+            select(NewsArticleData.id, NewsArticleData.title)
+            .where(NewsArticleData.id.in_(article_ids))
+        )
+        return self.db.execute(stmt).all()
+
     # === CREATE ===
     def insert_articles(self, articles: list[dict]) -> None:
         """Bulk-insert articles, ignoring duplicate identities."""
@@ -175,4 +198,61 @@ class NewsArchieveRepo:
         )
 
         self.db.execute(stmt)
+        self.db.commit()
+
+    # === UPDATE ===
+    # def update_news_scores(
+    #     self,
+    #     score_payload: list[dict[str, any]],
+    # ) -> None:
+    #     """
+    #     Bulk-update `relevance_score` and `relevance_reason` for a batch
+    #     of news rows, keyed by primary key `id`.
+
+    #     Args:
+    #         score_payload: List of dicts, each containing at minimum:
+    #             - "target_id" (int): target row primary key
+    #             - "relevance_score" (int)
+    #             - "relevance_reason" (str)
+
+    #     Returns:
+    #         None.
+    #     """
+    #     if not score_payload:
+    #         return
+
+    #     stmt = (
+    #         update(NewsArticleData)
+    #         .where(NewsArticleData.id == bindparam("target_id"))
+    #         .values(
+    #             relevance_score=bindparam("relevance_score"),
+    #             relevance_reason=bindparam("relevance_reason"),
+    #         )
+    #     )
+
+    #     self.db.execute(
+    #         stmt,
+    #         score_payload,
+    #         execution_options={"synchronize_session": None},
+    #     )
+    #     self.db.commit()
+
+    def update_news_scores(
+        self,
+        score_payload: list[dict[str, any]],
+    ) -> None:
+        """Bulk-update relevance scores and reasons by article ID."""
+        if not score_payload:
+            return
+
+        stmt = (
+            update(NewsArticleData.__table__)
+            .where(NewsArticleData.__table__.c.id == bindparam("target_id"))
+            .values(
+                relevance_score=bindparam("relevance_score"),
+                relevance_reason=bindparam("relevance_reason"),
+            )
+        )
+
+        self.db.execute(stmt, score_payload)
         self.db.commit()

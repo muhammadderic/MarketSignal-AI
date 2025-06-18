@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from app.modules.news_scoring.constants import NEWS_SCORING_MIN_TITLE_PAIRS, NEWS_SCORING_MAX_TITLE_PAIRS
+
 
 class ScoringResult(BaseModel):
     cleaned_title: str
@@ -14,13 +16,14 @@ class ScoringResult(BaseModel):
 
 
 class NewsScoreBatchRequest(BaseModel):
-    article_ids: list[int] = Field(
-        ...,
-        min_length=10,
-        max_length=20,
-        description="List of integer article IDs to synchronize and score (between 10 and 20 items)."
-    )
+    """Request body for scoring a batch of news articles."""
 
+    news_ids: list[int] = Field(
+        ...,
+        min_length=NEWS_SCORING_MIN_TITLE_PAIRS,
+        max_length=NEWS_SCORING_MAX_TITLE_PAIRS,
+        description="Between 10 and 20 unique news article IDs to score",
+    )
 
 class ArticleScoreResult(BaseModel):
     id: int = Field(

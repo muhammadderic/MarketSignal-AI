@@ -7,9 +7,16 @@ from fastapi import HTTPException, status
 from app.integrations.adapters import GoogleRSSAdapter
 from app.modules.news_archieve.constants import ArticleLocale, ARCHIVE_FRESHNESS_THRESHOLD_HOURS
 from app.modules.news_archieve.cache import archive_counts_cache
-from app.modules.news_archieve.schemas import ArchiveCountItem, ArchiveCountsResponse, DailyNewsResponse, NewsArticleResponse
+from app.modules.news_archieve.schemas import (
+    ArchiveCountItem, 
+    ArchiveCountsResponse, 
+    DailyNewsResponse, 
+    NewsArticleResponse, 
+    ArticleTitleData,
+)
 from app.modules.news_archieve.utils import parse_month, build_utc_day_bounds, extract_original_url
 from app.modules.news_archieve.repositories import NewsArchieveRepo
+from app.modules.news_scoring.ns_schemas import BatchScoringResponse
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +32,11 @@ class NewsArchieveService:
         self.repo = repo
         self.rss_adapter = rss_adapter
 
+    # ======================
     # === PUBLIC METHODS ===
+    # ======================
 
+    # === READ ===
     def get_archive_counts(
         self,
         *,
@@ -143,7 +153,63 @@ class NewsArchieveService:
 
         return DailyNewsResponse(date=published_date, items=items)
 
+    def get_titles_by_ids(self, article_ids: list[int]) -> list[ArticleTitleData]:
+        """
+        Retrieve article id-title pairs for the given IDs, skipping null titles.
+        
+        Args:
+            article_ids: List of article IDs to look up.
+            
+        Returns:
+            List of ArticleTitleData schemas for articles with non-null titles.
+        """
+        if not article_ids:
+            return []
+        
+        rows = self.repo.get_id_title_pairs_by_ids(article_ids)
+        
+        return [
+            ArticleTitleData(id=row.id, title=row.title)
+            for row in rows
+            if row.title is not None
+        ]
+
+    # === UPDATE ===
+    def update_news_scores(
+        self,
+        scoring_response: BatchScoringResponse,
+    ) -> None:
+        """
+        Persist LLM relevance scores and reasons back onto existing
+        news rows, keyed by article id.
+
+        This is a pure update path — no inserts, no upserts.
+
+        Args:
+            scoring_response: Parsed batch response from the scoring
+                service. Each `ArticleScoreResult` carries the target
+                `id` plus `relevance_score` and `relevance_reason`.
+
+        Returns:
+            None. Side effect: rows in `news_article_data` are updated.
+        """
+        if not scoring_response.results:
+            return
+
+        score_payload = [
+            {
+                "target_id": result.id,
+                "relevance_score": result.relevance_score,
+                "relevance_reason": result.relevance_reason,
+            }
+            for result in scoring_response.results
+        ]
+
+        self.repo.update_news_scores(score_payload)
+
+    # =======================
     # === PRIVATE METHODS ===
+    # =======================
     def _ingest_from_rss(self, *, locale: ArticleLocale, latest_date: datetime) -> None:
         try:
             articles = self.rss_adapter.to_articles(locale=locale.value)

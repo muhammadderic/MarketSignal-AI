@@ -7,8 +7,8 @@ from app.modules.news.news_schemas import ArticleTitleData
 
 def validate_batch_size(
     payload: list,
-    min_size: int = 10,
-    max_size: int = 20,
+    min_size: int = NEWS_SCORING_MIN_TITLE_PAIRS,
+    max_size: int = NEWS_SCORING_MAX_TITLE_PAIRS,
 ) -> bool:
     """
     Validate that a batch payload's list size is within the allowed range.

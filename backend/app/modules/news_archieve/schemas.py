@@ -3,6 +3,12 @@ from pydantic import BaseModel, Field, ConfigDict
 
 from app.modules.news_archieve.constants import ArticleLocale
 
+class ArticleTitleData(BaseModel):
+    """Schema for an article's id and title pair."""
+    
+    id: int = Field(..., description="Article ID")
+    title: str = Field(..., description="Article title")
+
 # === News by Date ===
 
 class NewsArticleResponse(BaseModel):
