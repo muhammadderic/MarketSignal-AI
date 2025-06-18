@@ -7,7 +7,7 @@ interface NewsCardProps {
   /** Selection wiring (optional to make the card stays reusable). */
   selected?: boolean;
   disabled?: boolean;
-  onToggle?: (id: string) => void;
+  onToggle?: (id: number) => void;
 }
 
 export const NewsCard = ({ 

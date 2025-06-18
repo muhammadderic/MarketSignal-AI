@@ -31,7 +31,7 @@ export interface NewsByDateRequest {
 
 /** A stored news record */
 export interface NewsItem {
-  id: string;
+  id: number;
   title: string;
   source: string;
   /** ISO 8601 datetime */

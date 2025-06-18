@@ -6,7 +6,7 @@ export const SELECTION_MAX = 5; // 20
 
 /** Request body for POST /api/news/score */
 export interface ScoreNewsRequest {
-  news_ids: string[];
+  news_ids: number[];
 }
 
 /** Response of POST /api/news/score (same shape as NewsByDateResponse) */

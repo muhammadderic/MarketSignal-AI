@@ -3,9 +3,9 @@ import type { NewsItem } from "../types";
 
 interface NewsListProps {
   items: NewsItem[];
-  selectedIds: Set<string>;
+  selectedIds: Set<number>;
   maxReached: boolean;
-  onToggle: (id: string) => void;
+  onToggle: (id: number) => void;
 }
 
 export const NewsList = ({ 

@@ -5,17 +5,17 @@ interface NewsSelectionState {
   /** Date the current selection. */
   date: string | null;
   /** Unique set of selected article IDs. */
-  selectedIds: Set<string>;
+  selectedIds: Set<number>;
 
   /** Start/continue selection for a given date; resets if date differs. */
-  toggle: (id: string) => void;
+  toggle: (id: number) => void;
   /** Remove multiple IDs. */
   clear: () => void;
 }
 
 export const useNewsSelectionStore = create<NewsSelectionState>((set, get) => ({
   date: null,
-  selectedIds: new Set<string>(),
+  selectedIds: new Set<number>(),
 
   toggle: (id) => {
     const { selectedIds } = get();
@@ -29,5 +29,5 @@ export const useNewsSelectionStore = create<NewsSelectionState>((set, get) => ({
     set({ selectedIds: next });
   },
 
-  clear: () => set({ selectedIds: new Set<string>() }),
+  clear: () => set({ selectedIds: new Set<number>() }),
 }))
