@@ -10,7 +10,7 @@ router = APIRouter(prefix="/news-scoring")
 
 
 @router.post(
-    "/batch-by-ids",
+    "/score",
     response_model=DailyNewsResponse,
     status_code=status.HTTP_200_OK
 )
