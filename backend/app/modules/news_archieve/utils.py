@@ -4,6 +4,7 @@ from urllib.parse import parse_qs, urlparse
 
 from app.modules.news_archieve.schemas import ArticleTitleData
 
+
 _MONTH_PATTERN = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 

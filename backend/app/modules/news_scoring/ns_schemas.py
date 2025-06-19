@@ -25,6 +25,7 @@ class NewsScoreBatchRequest(BaseModel):
         description="Between 10 and 20 unique news article IDs to score",
     )
 
+
 class ArticleScoreResult(BaseModel):
     id: int = Field(
         ..., 

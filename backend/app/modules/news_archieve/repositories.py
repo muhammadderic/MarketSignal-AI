@@ -201,42 +201,6 @@ class NewsArchieveRepo:
         self.db.commit()
 
     # === UPDATE ===
-    # def update_news_scores(
-    #     self,
-    #     score_payload: list[dict[str, any]],
-    # ) -> None:
-    #     """
-    #     Bulk-update `relevance_score` and `relevance_reason` for a batch
-    #     of news rows, keyed by primary key `id`.
-
-    #     Args:
-    #         score_payload: List of dicts, each containing at minimum:
-    #             - "target_id" (int): target row primary key
-    #             - "relevance_score" (int)
-    #             - "relevance_reason" (str)
-
-    #     Returns:
-    #         None.
-    #     """
-    #     if not score_payload:
-    #         return
-
-    #     stmt = (
-    #         update(NewsArticleData)
-    #         .where(NewsArticleData.id == bindparam("target_id"))
-    #         .values(
-    #             relevance_score=bindparam("relevance_score"),
-    #             relevance_reason=bindparam("relevance_reason"),
-    #         )
-    #     )
-
-    #     self.db.execute(
-    #         stmt,
-    #         score_payload,
-    #         execution_options={"synchronize_session": None},
-    #     )
-    #     self.db.commit()
-
     def update_news_scores(
         self,
         score_payload: list[dict[str, any]],
