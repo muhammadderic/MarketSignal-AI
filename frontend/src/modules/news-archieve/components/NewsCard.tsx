@@ -40,7 +40,18 @@ export const NewsCard = ({
         )}
 
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-base mb-1">{item.title}</h3>
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="font-semibold text-base mb-1">{item.title}</h3>
+            {item.score !== null && (
+              <span
+                className="shrink-0 inline-flex items-center justify-center
+                          w-8 h-8 rounded-full border border-black/60
+                          text-lg font-semibold leading-none"
+              >
+                {item.score}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-700">{item.source}</p>
           <p className="text-xs text-gray-500">
             {new Date(item.published_at).toLocaleString()}
