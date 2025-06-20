@@ -13,6 +13,7 @@ export const NewsListPage = () => {
   const {
     selection,
     isSubmitting,
+    submit
   } = scoring;
 
   // Reconcile counts when a previously-badged date returns no items (UD §2.2.16).
@@ -80,7 +81,7 @@ export const NewsListPage = () => {
             maxSelection={selection.maxSelection}
             canSubmit={selection.canSubmit}
             isSubmitting={isSubmitting}
-            onSubmit={() => console.log("Submit")}
+            onSubmit={submit}
             onClear={selection.clear}
           />
         </>

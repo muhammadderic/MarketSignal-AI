@@ -41,7 +41,7 @@ export const useNewsListPage = () => {
   }, [newsQuery.data, pageParam]);
 
   // Selection + scoring orchestration.
-  const scoring = useNewsScoring();
+  const scoring = useNewsScoring(validDate);
 
   /** Write the page back to the URL; reset to 1 if the date/locale changes. */
   const setPage = useCallback(

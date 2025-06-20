@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useNewsSelectionStore } from "../store/newsSelectionStore";
 import { SELECTION_MAX, SELECTION_MIN } from "../types";
 
@@ -16,6 +16,12 @@ export const useNewsSelection = () => {
 
   const maxReached = count >= SELECTION_MAX;
 
+  /** IDs snapshot for submission — order stable, unique. */
+  const snapshotIds = useCallback(
+    () => Array.from(selectedIds),
+    [selectedIds]
+  );
+
   return {
     selectedIds,
     count,
@@ -25,5 +31,6 @@ export const useNewsSelection = () => {
     maxSelection: SELECTION_MAX,
     toggle,
     clear,
+    snapshotIds,
   }
 }

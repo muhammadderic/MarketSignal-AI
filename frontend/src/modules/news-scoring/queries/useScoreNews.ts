@@ -28,7 +28,7 @@ export const useScoreNews = () => {
         date: variables.date,
       } satisfies NewsByDateRequest);
 
-      // Use persisted backend data directly (UD §2.5.5).
+      // Use persisted backend data directly.
       queryClient.setQueryData(key, data);
 
       // Also invalidate so any stale copies elsewhere refresh.

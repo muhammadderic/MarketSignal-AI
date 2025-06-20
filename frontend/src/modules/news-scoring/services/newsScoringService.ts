@@ -18,7 +18,7 @@ export const newsScoringService = {
     payload: ScoreNewsRequest,
     signal?: AbortSignal
   ): Promise<ScoreNewsResponse> => {
-    const endpoint = `${API_BASE}/batch-by-ids`;
+    const endpoint = `${API_BASE}/score`;
 
     const { data } = await apiClient.post<ScoreNewsResponse>(
       endpoint,
