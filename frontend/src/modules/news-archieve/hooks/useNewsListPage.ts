@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
 import type { Locale } from "@shared/types";
@@ -42,6 +42,14 @@ export const useNewsListPage = () => {
 
   // Selection + scoring orchestration.
   const scoring = useNewsScoring(validDate);
+  const { ensureDate } = scoring.selection;
+
+  // Keep the store's date in sync with the URL date. Since changing the
+  // date resets selection here, the page handles the warning before the
+  // URL changes (see NewsListPage). This is a safety net.
+  useEffect(() => {
+    if (validDate) ensureDate(validDate);
+  }, [validDate, ensureDate]);
 
   /** Write the page back to the URL; reset to 1 if the date/locale changes. */
   const setPage = useCallback(

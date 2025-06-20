@@ -6,6 +6,7 @@ export const useNewsSelection = () => {
   const selectedIds = useNewsSelectionStore((s) => s.selectedIds);
   const toggle = useNewsSelectionStore((s) => s.toggle);
   const clear = useNewsSelectionStore((s) => s.clear);
+  const ensureDate = useNewsSelectionStore((s) => s.ensureDate);
 
   const count = selectedIds.size;
 
@@ -31,6 +32,7 @@ export const useNewsSelection = () => {
     maxSelection: SELECTION_MAX,
     toggle,
     clear,
+    ensureDate,
     snapshotIds,
   }
 }
