@@ -5,22 +5,22 @@ import { isSafeArticleUrl, truncateUrl } from "../utils/url";
 interface NewsCardProps {
   item: NewsItem;
   /** Selection wiring (optional to make the card stays reusable). */
+  onToggle: (id: number) => void;
   selected?: boolean;
   disabled?: boolean;
-  onToggle?: (id: number) => void;
 }
 
 export const NewsCard = ({ 
   item,
+  onToggle,
   selected = false,
   disabled = false,
-  onToggle,
 }: NewsCardProps) => {
   const color = getCardColor(item.score);
   const safe = isSafeArticleUrl(item.link);
 
-  // NewsCard is a reusable component, so onToggle is an optional prop (onToggle?).
-  const selectable = typeof onToggle === "function";
+  // News items with a score cannot be selected again
+  const selectable = !item.score;
 
   return (
     <article 
