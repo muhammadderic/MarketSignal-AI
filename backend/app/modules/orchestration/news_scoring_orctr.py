@@ -39,7 +39,7 @@ class NewsScoringOrchestrator:
             A DailyNewsResponse containing all articles for the given
             date and locale, with the freshly persisted scores.
         """
-        # 1. Check total data retrieved (min: 10 and max: 20)
+        # 1. Check total data retrieved
         validate_batch_size(article_ids)
 
         # 2. Get all news titles from database

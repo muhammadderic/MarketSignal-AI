@@ -5,6 +5,7 @@ from calendar import timegm
 from fastapi import HTTPException, status
 
 from app.integrations.adapters import GoogleRSSAdapter
+from app.shared.utils import to_utc_aware
 from app.modules.news_archieve.constants import ArticleLocale, ARCHIVE_FRESHNESS_THRESHOLD_HOURS
 from app.modules.news_archieve.cache import archive_counts_cache
 from app.modules.news_archieve.schemas import (
@@ -258,26 +259,20 @@ class NewsArchieveService:
     def _filter_recent_news(
         self,
         feed_entries: list[dict[str, any]],
-        latest_date: datetime | None = None,
+        latest_date: datetime,
     ) -> list[dict[str, any]]:
         now = datetime.now(timezone.utc)
-        cutoff = latest_date or (now - timedelta(days=1))
 
         filtered_entries = []
 
         for entry in feed_entries:
-            published_parsed = entry.get("published_parsed")
-
-            # Skip entries without a valid parsed publication date.
-            if not published_parsed:
+            published_at = entry.get("published_at")
+            if not isinstance(published_at, datetime):
                 continue
 
-            published_at = datetime.fromtimestamp(
-                timegm(published_parsed),
-                tz=timezone.utc,
-            )
+            published_at = to_utc_aware(published_at)
 
-            if not cutoff <= published_at <= now:
+            if not latest_date < published_at <= now:
                 continue
 
             raw_link = entry.get("link")
@@ -285,7 +280,7 @@ class NewsArchieveService:
             filtered_entries.append(
                 {
                     "title": entry["title"],
-                    "source": entry["source"]["title"],
+                    "source": entry["source"],
                     "published_at": published_at,
                     "link": extract_original_url(raw_link) if raw_link else None,
                 }

@@ -2,8 +2,9 @@ import logging
 from datetime import datetime, date, timezone
 from typing import Sequence
 
-from sqlalchemy import func, select, insert, bindparam, update, Row
+from sqlalchemy import func, select, bindparam, update, Row
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.sqlite import insert
 
 from app.modules.news.models import NewsArticleData
 from app.modules.news_archieve.constants import ArticleLocale
@@ -115,7 +116,19 @@ class NewsArchieveRepo:
             for row in rows
         ]
 
-        return daily_counts, rows[0].newest_published_at
+        newest_published_at = rows[0].newest_published_at
+
+        # Architectural constraint: Database datetimes are naive UTC; application datetimes must be UTC-aware.
+        # Normalize the database value to a UTC-aware datetime before returning it.
+        if newest_published_at is not None:
+            if newest_published_at.tzinfo is None:
+                newest_published_at = newest_published_at.replace(
+                    tzinfo=timezone.utc
+                )
+            else:
+                newest_published_at = newest_published_at.astimezone(timezone.utc)
+
+        return daily_counts, newest_published_at
 
     def get_all_by_published_date(
         self,

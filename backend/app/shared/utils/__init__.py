@@ -1,1 +1,1 @@
-from .datetime import utc_now
+from .datetime import utc_now, to_utc_aware
