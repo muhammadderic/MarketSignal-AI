@@ -16,7 +16,7 @@ export const NewsListPage = () => {
     submit
   } = scoring;
 
-  // Reconcile counts when a previously-badged date returns no items (UD §2.2.16).
+  // Reconcile counts when a previously-badged date returns no items.
   const isEmptyResult =
     newsQuery.isSuccess && (newsQuery.data?.items.length ?? 0) === 0;
 
