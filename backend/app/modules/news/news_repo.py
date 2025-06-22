@@ -1,97 +1,16 @@
 from datetime import datetime, date, time, timedelta, timezone
 from typing import Sequence
-from sqlalchemy import Row, select, func, bindparam, update
+from sqlalchemy import Row, select, bindparam, update
 from sqlalchemy.orm import Session
-from sqlalchemy.dialects.sqlite import insert
 
 from app.modules.news.models import NewsArticleData
-from app.modules.news.news_constants import ArticleLocale
 
-
-NewsArticleRecordRow = Row[
-    tuple[
-        int,
-        str | None,
-        str,
-        datetime,
-        str | None,
-        ArticleLocale,
-        int | None,
-        str | None,
-    ]
-]
 
 class NewsRepository:
     def __init__(self, db: Session):
         self.db = db
 
     # === READ ===
-    def get_latest_published_at(self) -> datetime | None:
-        """
-        Fetch the newest article's published_at value natively using SQL MAX aggregation.
-        
-        Returns:
-            The most recent published_at datetime, or None if the table is empty.
-        """
-        latest_dt = self.db.query(
-            func.max(NewsArticleData.published_at)
-        ).scalar()
-
-        if latest_dt is None:
-            return None
-
-        # Convert SQLite's offset-naive datetime into UTC-aware datetime
-        if latest_dt.tzinfo is None:
-            return latest_dt.replace(tzinfo=timezone.utc)
-
-        return latest_dt.astimezone(timezone.utc)
-
-    def get_all_by_published_date(
-        self,
-        start_date: datetime,
-        locale: ArticleLocale,
-        end_date: datetime | None = None,
-    ) -> Sequence[NewsArticleRecordRow]:
-        """
-        Fetch all news articles whose `published_at` falls within the
-        given UTC calendar date, scoped to a locale.
-
-        Uses an inclusive [00:00:00, 23:59:59] UTC range so the query
-        remains sargable against `ix_news_article_data_published_at`.
-
-        Args:
-            start_date
-            end_date
-            locale: Locale string (e.g. "ID") to scope results.
-
-        Returns:
-            Sequence of projected rows carrying the full article payload,
-            newest first.
-        """
-        if end_date is None:
-            end_date = datetime.now(timezone.utc).replace(tzinfo=None)
-
-        stmt = (
-            select(
-                NewsArticleData.id,
-                NewsArticleData.title,
-                NewsArticleData.source,
-                NewsArticleData.published_at,
-                NewsArticleData.link,
-                NewsArticleData.locale,
-                NewsArticleData.relevance_score,
-                NewsArticleData.relevance_reason,
-            )
-            .where(
-                NewsArticleData.published_at >= start_date,
-                NewsArticleData.published_at <= end_date,
-                NewsArticleData.locale == locale,
-            )
-            .order_by(NewsArticleData.published_at.desc())
-        )
-
-        return self.db.execute(stmt).all()
-
     def get_id_title_pairs_by_ids(
         self, 
         article_ids: list[int]
@@ -149,24 +68,6 @@ class NewsRepository:
         return self.db.execute(stmt).all()
 
     # === CREATE ===
-    def save_filtered_articles(self, articles: list[dict[str, str | None]]) -> None:
-        """
-        Persist filtered news articles to database while ignoring duplicates 
-        matching the unique composite constraint (title, source, published_at, locale).
-        
-        Args:
-            articles: List of dictionary payloads to insert.
-        """
-        if not articles:
-            return
-
-        stmt = insert(NewsArticleData).values(articles)
-        stmt = stmt.on_conflict_do_nothing(
-            index_elements=["title", "source", "published_at", "locale"]
-        )
-
-        self.db.execute(stmt)
-        self.db.commit()
 
     # === UPDATE ===
     def update_news_scores(

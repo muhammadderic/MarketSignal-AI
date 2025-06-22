@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 from datetime import date
 
-from app.modules.news.news_constants import ArticleLocale
+from app.modules.news_archieve.constants import ArticleLocale
 from app.modules.news_archieve.constants import MONTH_QUERY_PATTERN
 from app.modules.news_archieve.schemas import ArchiveCountsResponse, DailyNewsResponse
 from app.modules.news_archieve.services import NewsArchieveService

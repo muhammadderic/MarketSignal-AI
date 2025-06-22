@@ -33,6 +33,9 @@ class GoogleRSSClient:
                 detail=f"Unsupported locale: {locale}. Supported: {list(self.LOCALES.keys())}"
             )
     
+    # PLANNED TO DELETE
+    # Used by: /scripts/inspect_feed.py
+    # Used by: /tests/test_google_rss_client_contract.py
     def fetch_feed(self) -> Dict[str, Any]:
         """
         Fetch and parse the RSS feed.

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 from app.shared.utils import utc_now
-from app.modules.news.news_constants import ArticleLocale
+from app.modules.news_archieve.constants import ArticleLocale
 
 
 class NewsArticleData(Base):

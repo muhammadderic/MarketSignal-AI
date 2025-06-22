@@ -1,20 +1,7 @@
 import logging
-from calendar import timegm
-from datetime import date, datetime, timedelta, timezone
-from fastapi import HTTPException, status
 
 from app.integrations.clients.google_rss_client import GoogleRSSClient
-from app.modules.news.news_schemas import (
-    ArticleTitleData,
-    NewsFeedResponse, 
-    NewsArticle,
-)
-from app.modules.news.news_utils import (
-    extract_original_url,
-    is_data_fresh,
-    get_max_age_cutoff,
-    validate_locale,
-)
+
 from app.modules.news.news_repo import NewsRepository
 from app.modules.news_scoring.ns_schemas import BatchScoringResponse
 
@@ -32,87 +19,6 @@ class NewsService:
         self.client = client
     
     # === READ ===
-    def get_business_news(self, locale: str = "ID") -> NewsFeedResponse:
-        """
-        Fetch and filter business news from Google RSS feed with caching strategy.
-        
-        Args:
-            locale: Locale code (e.g., 'ID', 'US'). Defaults to 'ID'.
-            
-        Returns:
-            NewsFeedResponse: Filtered news feed response containing articles payload.
-        """
-        # 1. Validate locale
-        validated_locale = validate_locale(locale)
-        if validated_locale is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid or unsupported locale '{locale}'."
-            )
-
-        # 2. Evaluate cache fresh status against database threshold
-        # 2.1. Retrieve the timestamp of the most recent article in persistent storage
-        latest_date = self.repo.get_latest_published_at()
-        
-        # 2.2. Validate data staleness based on configured maximum allowable age
-        is_fresh = is_data_fresh(
-            last_published_at=latest_date,
-            max_age_hours=5
-        )
-
-        # 3. Pipeline routing based on cache freshness status
-        if not is_fresh:
-            # 3.1. Reconfigure RSS client instance if requested locale differs from active state
-            if self.client.locale != validated_locale:
-                self.client = GoogleRSSClient(locale=validated_locale)
-
-            # 3.2. Harvest raw news payload from external Google RSS endpoint
-            feed_data = self.client.fetch_feed()
-
-            # 3.3. Screen feed entries published after the last database checkpoint
-            filtered_articles = self._filter_recent_news(
-                feed_entries=feed_data.get("entries", []),
-                start_date=latest_date,
-            )
-
-            # 3.4. Extract raw dictionary payloads and execute bulk persistence with deduplication
-            article_dicts: list[dict[str, str | None]] = [
-                {
-                    "title": article["title"],
-                    "source": article["source"],
-                    "published_at": article["published_at"],
-                    "link": article["link"],
-                    "locale": validated_locale,
-                    "relevance_score": None,
-                    "relevance_reason": None,
-                }
-                for article in filtered_articles
-            ]
-            self.repo.save_filtered_articles(article_dicts)
-
-            # 3.5. Clear cache for get_available_dates()
-            self.get_available_dates.cache_clear()
-            
-        # 4. Determine lookback cutoff timestamp for cached article retrieval
-        start_date = get_max_age_cutoff()
-
-        # 5. Query persisted news articles within the active timeline boundary
-        filtered_articles = self.repo.get_all_by_published_date(
-            start_date=start_date,
-            locale=validated_locale
-        )
-
-        # 6. Transform filtered article payloads into Pydantic response models
-        articles_schema = [
-            NewsArticle(**(article._asdict() if hasattr(article, "_asdict") else article))
-            for article in filtered_articles
-        ]
-        
-        # 7. Construct and return final HTTP news feed response payload
-        return NewsFeedResponse(
-            articles=articles_schema,
-            total_count=len(articles_schema)
-        )
     
     # === UPDATE ===
     def update_news_scores(
@@ -150,34 +56,3 @@ class NewsService:
     # =======================
     # === PRIVATE METHODS ===
     # =======================
-    def _filter_recent_news(
-        self,
-        feed_entries: list[dict[str, any]],
-        start_date: datetime | None = None,
-    ) -> list[dict[str, any]]:
-        now = datetime.now(timezone.utc)
-        cutoff = start_date or (now - timedelta(days=1))
-
-        filtered_entries = []
-
-        for entry in feed_entries:
-            published_at = datetime.fromtimestamp(
-                timegm(entry["published_parsed"]),
-                tz=timezone.utc,
-            )
-
-            if not cutoff <= published_at <= now:
-                continue
-
-            raw_link = entry.get("link")
-
-            filtered_entries.append(
-                {
-                    "title": entry["title"],
-                    "source": entry["source"]["title"],
-                    "published_at": published_at,
-                    "link": extract_original_url(raw_link) if raw_link else None,
-                }
-            )
-
-        return filtered_entries
