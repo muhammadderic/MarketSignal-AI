@@ -6,9 +6,21 @@ import { ScoreSelectionBar } from "@modules/news-scoring/components/ScoreSelecti
 import { useNewsListPage } from "../hooks/useNewsListPage";
 import { NewsList } from "../components/NewsList";
 import { NewsPagination } from "../components/NewsPagination";
+import { NewsScoreFilter } from "../components/NewsScoreFilter";
 
 export const NewsListPage = () => {
-  const { date, newsQuery, pagination, setPage, reconcileCounts, scoring } = useNewsListPage();
+  const { 
+    date, 
+    newsQuery, 
+    pagination, 
+    setPage, 
+    reconcileCounts, 
+    scoring,
+    // Filtering
+    scoreFilter,
+    toggleScore,
+    clearScoreFilter,
+  } = useNewsListPage();
 
   const {
     selection,
@@ -19,6 +31,12 @@ export const NewsListPage = () => {
   // Reconcile counts when a previously-badged date returns no items.
   const isEmptyResult =
     newsQuery.isSuccess && (newsQuery.data?.items.length ?? 0) === 0;
+
+    // "News exists for this date, but the score filter excluded all of it".
+  const isEmptyAfterFilter =
+    newsQuery.isSuccess &&
+    (newsQuery.data?.items.length ?? 0) > 0 &&
+    pagination.totalItems === 0;
 
   useEffect(() => {
     if (isEmptyResult) reconcileCounts();
@@ -57,8 +75,22 @@ export const NewsListPage = () => {
         </div>
       )}
 
+      {newsQuery.isSuccess && (newsQuery.data?.items.length ?? 0) > 0 && (
+        <NewsScoreFilter
+          selected={scoreFilter}
+          onToggle={toggleScore}
+          onClear={clearScoreFilter}
+        />
+      )}
+
       {isEmptyResult && (
         <p className="text-gray-500">No news available for this date.</p>
+      )}
+
+      {isEmptyAfterFilter && (
+        <p className="text-gray-500">
+          No news matches the selected score filter for this date.
+        </p>
       )}
 
       {newsQuery.isSuccess && pagination.totalItems > 0 && (

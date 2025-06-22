@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
-import type { Locale } from "@shared/types";
+import type { Locale, ScoreOrNull } from "@shared/types";
 import { useNewsScoring } from "@modules/news-scoring/hooks/useNewsScoring";
 
 import { useNewsByDate } from "../queries/useNewsByDate";
@@ -9,6 +9,7 @@ import { useMonthlyCounts } from "../queries/useMonthlyCounts";
 import { toArchiveMonth } from "../utils/date";
 import { isValidDate } from "../utils/date";
 import { paginate, parsePage } from "../utils/pagination";
+import { applyScoreFilter, parseScoreFilter, serializeScoreFilter } from "../utils/scoreFilter";
 
 const DEFAULT_LOCALE: Locale = "ID";
 
@@ -21,8 +22,8 @@ export const useNewsListPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const date = searchParams.get("date");
   const pageParam = searchParams.get("page");
-
   const localeParam = searchParams.get("locale") as Locale | null;
+  const scoreParam = searchParams.get("score");
 
   const validDate = date && isValidDate(date) ? date : null;
   const locale: Locale = localeParam ?? DEFAULT_LOCALE;
@@ -34,11 +35,18 @@ export const useNewsListPage = () => {
   const month = validDate ? toArchiveMonth(new Date(validDate)) : null;
   const countsQuery = useMonthlyCounts(month ? { month, locale } : null);
 
-  /** Paginate client-side over the fetched items. */
+  /** Score filter parsed from the URL. */
+  const scoreFilter = useMemo(
+    () => parseScoreFilter(scoreParam),
+    [scoreParam]
+  );
+
+  /** Filter first, then paginate — so page counts reflect the filtered set. */
   const pagination = useMemo(() => {
-    const items = newsQuery.data?.items ?? [];
-    return paginate(items, parsePage(pageParam));
-  }, [newsQuery.data, pageParam]);
+    const all = newsQuery.data?.items ?? [];
+    const filtered = applyScoreFilter(all, scoreFilter);
+    return paginate(filtered, parsePage(pageParam));
+  }, [newsQuery.data, scoreFilter, pageParam]);
 
   // Selection + scoring orchestration.
   const scoring = useNewsScoring(validDate);
@@ -50,6 +58,47 @@ export const useNewsListPage = () => {
   useEffect(() => {
     if (validDate) ensureDate(validDate);
   }, [validDate, ensureDate]);
+
+  /** Toggle a single score bucket; resets page to 1. */
+  const toggleScore = useCallback(
+    (score: ScoreOrNull) => {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          const next = new Set(parseScoreFilter(params.get("score")));
+          if (next.has(score)) {
+            next.delete(score);
+          } else {
+            next.add(score);
+          }
+
+          const serialized = serializeScoreFilter(next);
+          if (serialized) {
+            params.set("score", serialized);
+          } else {
+            params.delete("score");
+          }
+          params.delete("page"); // reset to page 1 on filter change
+          return params;
+        },
+        { replace: false }
+      );
+    },
+    [setSearchParams]
+  );
+
+  /** Clear all score filters. */
+  const clearScoreFilter = useCallback(() => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("score");
+        params.delete("page");
+        return params;
+      },
+      { replace: false }
+    );
+  }, [setSearchParams]);
 
   /** Write the page back to the URL; reset to 1 if the date/locale changes. */
   const setPage = useCallback(
@@ -89,6 +138,10 @@ export const useNewsListPage = () => {
     pagination,
     setPage,
     reconcileCounts,
-    scoring
+    scoring,
+    // Filtering
+    scoreFilter,
+    toggleScore,
+    clearScoreFilter,
   };
 };
