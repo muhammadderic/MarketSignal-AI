@@ -8,7 +8,7 @@ from alembic import context
 from app.core.config import settings
 from app.core.database import Base
 
-from app.modules.news.models import NewsArticleData
+from app.modules.news_archieve.models import NewsArticleData
 from app.modules.llm_registry.models import LLMModelData
 
 # this is the Alembic Config object, which provides

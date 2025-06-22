@@ -2,11 +2,11 @@ import logging
 from datetime import datetime, date, timezone
 from typing import Sequence
 
-from sqlalchemy import func, select, bindparam, update, Row
+from sqlalchemy import func, select, bindparam, update, Row 
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.sqlite import insert
 
-from app.modules.news.models import NewsArticleData
+from app.modules.news_archieve.models import NewsArticleData
 from app.modules.news_archieve.constants import ArticleLocale
 
 logger = logging.getLogger(__name__)
