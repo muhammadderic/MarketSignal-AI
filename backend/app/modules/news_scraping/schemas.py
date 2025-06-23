@@ -6,7 +6,12 @@ from app.modules.news_scraping.constants import LinkResolutionStatus
 # === REQUESTS ===
 
 class ResolveLinksRequest(BaseModel):
-    article_ids: list[int] = Field(..., min_length=1, description="IDs of NewsArticleData rows to resolve")
+    article_ids: list[int] = Field(
+    ...,
+    min_length=1,
+    max_length=30,
+    description="IDs of NewsArticleData rows to resolve (max 30 per request)",
+)
 
 
 # === RESPONSES ===
