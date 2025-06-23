@@ -9,7 +9,7 @@ DATA_DIR: Path = PROJECT_ROOT / "data"
 class Settings(BaseSettings):
     # === DATABASE ===
     # Default filename if environment variable DB_FILENAME is not set
-    DB_FILENAME: str = "database.db"
+    DB_FILENAME: str = "database-v1.db"
 
     @property
     def DB_FILE_PATH(self) -> Path:

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 from app.shared.utils import utc_now
 from app.modules.news_archieve.constants import ArticleLocale
+from app.modules.news_scraping.constants import LinkResolutionStatus
 
 
 class NewsArticleData(Base):
@@ -21,7 +22,16 @@ class NewsArticleData(Base):
         nullable=False, 
         index=True
     )
+
     link: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    resolved_link: Mapped[str | None] = mapped_column(String(2048), nullable=True, default=None)
+    link_resolution_status: Mapped[LinkResolutionStatus] = mapped_column(
+        String(10),
+        default=LinkResolutionStatus.PENDING,
+        nullable=False,
+        index=True,
+    )
+
     locale: Mapped[ArticleLocale] = mapped_column(
         String(10), 
         default=ArticleLocale.UNASSIGNED, 

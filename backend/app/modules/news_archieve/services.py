@@ -18,6 +18,7 @@ from app.modules.news_archieve.schemas import (
 from app.modules.news_archieve.utils import parse_month, build_utc_day_bounds, extract_original_url
 from app.modules.news_archieve.repositories import NewsArchieveRepo
 from app.modules.news_scoring.ns_schemas import BatchScoringResponse
+from app.modules.news_scraping.constants import LinkResolutionStatus
 
 logger = logging.getLogger(__name__)
 
@@ -228,6 +229,8 @@ class NewsArchieveService:
                     "locale": locale.value,
                     "relevance_score": None,
                     "relevance_reason": None,
+                    "resolved_link": None,
+                    "link_resolution_status": LinkResolutionStatus.PENDING,
                 }
                 for article in filtered_articles
             ]
@@ -259,9 +262,10 @@ class NewsArchieveService:
     def _filter_recent_news(
         self,
         feed_entries: list[dict[str, any]],
-        latest_date: datetime,
+        latest_date: datetime | None,
     ) -> list[dict[str, any]]:
         now = datetime.now(timezone.utc)
+        latest_date = latest_date or (now - timedelta(days=1))
 
         filtered_entries = []
 
