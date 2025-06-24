@@ -1,0 +1,19 @@
+[project]
+name = "backend-v1"
+version = "1.0.0"
+description = "MarketSignal AI backend"
+readme = "README.md"
+authors = [
+    { name = "muhammadderic" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.20.0",
+    "fastapi>=0.143.3",
+    "feedparser>=6.0.14",
+    "httpx>=0.28.1",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.0",
+    "sqlalchemy>=2.1.5",
+    "uvicorn[standard]>=0.54.0",
+]
