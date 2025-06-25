@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 
+from app.core.config import settings
+
 
 app = FastAPI(
-    title="MarketSignal AI API",
+    title=settings.APP_NAME,
     version="1.0.0",
 )
 
