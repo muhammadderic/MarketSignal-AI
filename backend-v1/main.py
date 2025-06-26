@@ -4,6 +4,9 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.core.database import engine
 from app.core.exceptions import register_exception_handlers
+from app.core.logging import configure_logging
+
+configure_logging()
 
 
 @asynccontextmanager
