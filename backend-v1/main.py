@@ -3,6 +3,7 @@ from fastapi import FastAPI
 
 from app.core.config import settings
 from app.core.database import engine
+from app.core.exceptions import register_exception_handlers
 
 
 @asynccontextmanager
@@ -15,6 +16,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# === GLOBAL ERROR HANDLER ===
+register_exception_handlers(app)
 
 
 # === ROUTES ===
