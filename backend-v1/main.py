@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.core.database import engine
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
+from app.core.security import configure_security
 
 configure_logging()
 
@@ -19,6 +20,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# === MIDDLEWARES ===
+configure_security(app)
 
 # === GLOBAL ERROR HANDLER ===
 register_exception_handlers(app)
