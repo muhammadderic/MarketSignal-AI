@@ -1,0 +1,1 @@
+"""MarketSignal AI backend application package."""

@@ -10,6 +10,7 @@ env/
 
 # Environment variables and secrets
 .env
+*.env.local
 .env.*
 !.env.example
 
@@ -39,6 +40,11 @@ dist/
 *.db
 *.sqlite
 *.sqlite3
+*.db
+*.db-wal
+*.db-shm
+marketsignal.db
+marketsignal.db
 
 # Logs
 *.log
