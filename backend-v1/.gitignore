@@ -45,6 +45,7 @@ dist/
 *.db-shm
 marketsignal.db
 marketsignal.db
+/data
 
 # Logs
 *.log
