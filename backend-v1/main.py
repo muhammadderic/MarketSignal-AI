@@ -1,8 +1,6 @@
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.core.config import settings
-from app.core.database import engine
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.security import configure_security
@@ -10,15 +8,9 @@ from app.core.security import configure_security
 configure_logging()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    yield
-    await engine.dispose()
-
 app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0",
-    lifespan=lifespan
 )
 
 # === MIDDLEWARES ===
