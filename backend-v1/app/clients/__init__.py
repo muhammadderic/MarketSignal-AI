@@ -1,0 +1,1 @@
+"""External service client factories (HTTP, Groq)."""

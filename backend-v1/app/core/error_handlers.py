@@ -55,6 +55,13 @@ class ServiceUnavailableError(AppError):
     error_code = "SERVICE_UNAVAILABLE"
 
 
+class RateLimitError(AppError):
+    """Upstream rate limit exhausted (HTTP 429)."""
+
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    error_code = "RATE_LIMITED"
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
