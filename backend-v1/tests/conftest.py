@@ -76,7 +76,7 @@ def test_database_url(tmp_path_factory: pytest.TempPathFactory) -> Generator[str
     yield url
 
 
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def test_db_engine(test_database_url: str) -> AsyncGenerator[AsyncEngine, None]:
     """Module-scoped async engine bound to the migrated test database."""
     engine = create_async_engine(test_database_url, echo=False, future=True)
@@ -129,13 +129,3 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
             yield client
     finally:
         fastapi_app.dependency_overrides.pop(get_async_db, None)
-
-
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """Provide a single event loop for the session (needed for module-scoped async fixtures)."""
-    loop = asyncio.new_event_loop()
-    try:
-        yield loop
-    finally:
-        loop.close()
