@@ -52,24 +52,33 @@ def _apply_sqlite_pragmas(dbapi_connection: object, _record: object) -> None:
 
 
 def _run_alembic_upgrade(database_url: str) -> None:
-    """Run ``alembic upgrade head`` against ``database_url`` (ARC-008).
-
-    A fresh ``Config`` instance is built from ``alembic.ini`` and the URL is
-    overridden *before* loading the environment, so the migration applies to
-    the isolated test database rather than the developer's local one.
-    """
     cfg = Config(str(ALEMBIC_INI))
     cfg.set_main_option("script_location", str(REPO_ROOT / "alembic"))
     cfg.set_main_option("sqlalchemy.url", database_url)
+    print(f"[conftest] Running Alembic against: {database_url}")
     command.upgrade(cfg, "head")
+
+    # database_url format: sqlite+aiosqlite:///C:/path/to/file.db
+    prefix = "sqlite+aiosqlite:///"
+    assert database_url.startswith(prefix), database_url
+    db_file = Path(database_url[len(prefix):])
+    print(f"[conftest] DB exists: {db_file.exists()}  path={db_file}")
+
+    import sqlite3
+    if db_file.exists():
+        with sqlite3.connect(db_file) as conn:
+            tables = {r[0] for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )}
+            print(f"[conftest] tables after upgrade: {sorted(tables)}")
+            assert "articles" in tables, f"articles missing; found: {sorted(tables)}"
 
 
 @pytest.fixture(scope="module")
 def test_database_url(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None, None]:
-    """Yield a ``file:`` URL for a fresh per-module SQLite DB with migrations applied."""
     db_dir = tmp_path_factory.mktemp("marketsignal-test-db")
-    db_path = db_dir / "test_marketsignal.db"
-    url = f"sqlite+aiosqlite:///{db_path}"
+    db_path = (db_dir / "test_marketsignal.db").resolve()
+    url = f"sqlite+aiosqlite:///{db_path.as_posix()}"
 
     _run_alembic_upgrade(url)
 
