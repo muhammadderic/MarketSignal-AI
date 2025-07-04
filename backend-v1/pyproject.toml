@@ -40,6 +40,20 @@ packages = ["app"]
 line-length = 88
 target-version = "py313"
 src = ["app"]
+exclude = [
+    ".venv",
+    "venv",
+    ".git",
+    "__pycache__",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+    "alembic/versions",
+    "frontend",
+    "node_modules",
+    "dist",
+    "build",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ANN", "ASYNC", "RUF"]
@@ -58,6 +72,25 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 disallow_any_unimported = true
 plugins = ["pydantic.mypy"]
+explicit_package_bases = true
+mypy_path = "."
+exclude = [
+    "^alembic/versions/",
+    "^frontend/",
+    "^node_modules/",
+    "^build/",
+    "^dist/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "aiosqlite.*",
+    "feedparser.*",
+    "groq.*",
+    "bs4.*",
+    "lxml.*",
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
