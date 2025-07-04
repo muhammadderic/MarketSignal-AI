@@ -13,17 +13,15 @@ Provides:
 
 from __future__ import annotations
 
-import re
 import contextvars
 import json
 import logging
+import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.core.config import settings
-
-
 
 _SECRET_PATTERN = re.compile(
     r"(?i)\b(groq_api_key|authorization|cookie|api_key|secret|password|token)"
@@ -118,7 +116,7 @@ class RedactingFilter(logging.Filter):
         * ``record.msg`` when it is a dict (rare, but defensive).
     """
 
-    def filter(self, record: logging.LogRecord) -> bool:  # noqa: A003 - stdlib API
+    def filter(self, record: logging.LogRecord) -> bool:
         if isinstance(record.args, dict):
             record.args = _redact(record.args)
 
@@ -145,7 +143,7 @@ class RedactingFilter(logging.Filter):
 # ----------------
 def _utc_iso_from_epoch(created: float) -> str:
     """Convert a ``LogRecord.created`` epoch value to ISO 8601 UTC."""
-    return datetime.fromtimestamp(created, tz=timezone.utc).strftime(
+    return datetime.fromtimestamp(created, tz=UTC).strftime(
         "%Y-%m-%dT%H:%M:%S.%fZ"
     )
 

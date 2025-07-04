@@ -56,7 +56,7 @@ AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
 )
 
 
-async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_async_db() -> AsyncGenerator[AsyncSession]:
     """FastAPI dependency yielding an ``AsyncSession`` with automatic lifecycle.
 
     Commits on successful request completion; rolls back on unhandled

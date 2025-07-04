@@ -7,19 +7,19 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.db.database import async_engine
 from app.api.v1.api import api_router
+from app.clients.http_client import close_http_client, init_http_client
 from app.core.config import settings
 from app.core.error_handlers import register_exception_handlers
 from app.core.logging import setup_logging
 from app.core.middleware import RequestCorrelationMiddleware
-from app.clients.http_client import close_http_client, init_http_client
+from app.db.database import async_engine
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     """Manage async engine resources across the application lifecycle."""
     await init_http_client()
     logger.info(

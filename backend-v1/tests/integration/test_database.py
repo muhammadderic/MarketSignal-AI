@@ -6,7 +6,7 @@ per-test state via outer-transaction rollback.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +16,7 @@ from app.db.models import Article, ScrapingStatus, WorkflowState
 
 def _sample_article(**overrides: object) -> Article:
     """Build a fully populated ``Article`` ORM instance for insertion."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     data: dict[str, object] = {
         "google_url": "https://news.google.com/rss/articles/mock?oc=5",
         "resolved_url": None,

@@ -9,7 +9,7 @@ invariant ``ck_articles_insight_requires_scraped_content`` enforces
 from __future__ import annotations
 
 import enum
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from sqlalchemy import (
     CheckConstraint,
@@ -48,7 +48,7 @@ class ScrapingStatus(str, enum.Enum):
 
 def _utcnow() -> datetime:
     """Return the current time as a UTC-aware datetime."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # SQLite has no native ``now()`` returning an ISO-8601 UTC string. This default

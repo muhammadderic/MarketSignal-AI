@@ -16,7 +16,6 @@ live HTTP calls are performed.
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
 
@@ -24,6 +23,8 @@ import pytest
 import pytest_asyncio
 from alembic import command
 from alembic.config import Config
+from httpx import ASGITransport, AsyncClient
+from main import app as fastapi_app
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -31,10 +32,8 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from httpx import ASGITransport, AsyncClient
 
 from app.db.database import get_async_db
-from main import app as fastapi_app
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ALEMBIC_INI = REPO_ROOT / "alembic.ini"
@@ -75,7 +74,7 @@ def _run_alembic_upgrade(database_url: str) -> None:
 
 
 @pytest.fixture(scope="module")
-def test_database_url(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None, None]:
+def test_database_url(tmp_path_factory: pytest.TempPathFactory) -> Generator[str]:
     db_dir = tmp_path_factory.mktemp("marketsignal-test-db")
     db_path = (db_dir / "test_marketsignal.db").resolve()
     url = f"sqlite+aiosqlite:///{db_path.as_posix()}"
@@ -86,7 +85,7 @@ def test_database_url(tmp_path_factory: pytest.TempPathFactory) -> Generator[str
 
 
 @pytest_asyncio.fixture(scope="module", loop_scope="module")
-async def test_db_engine(test_database_url: str) -> AsyncGenerator[AsyncEngine, None]:
+async def test_db_engine(test_database_url: str) -> AsyncGenerator[AsyncEngine]:
     """Module-scoped async engine bound to the migrated test database."""
     engine = create_async_engine(test_database_url, echo=False, future=True)
     event.listen(engine.sync_engine, "connect", _apply_sqlite_pragmas)
@@ -97,7 +96,7 @@ async def test_db_engine(test_database_url: str) -> AsyncGenerator[AsyncEngine, 
 
 
 @pytest_asyncio.fixture
-async def db_session(test_db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+async def db_session(test_db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
     """Yield a session bound to an outer transaction rolled back per test.
 
     This guarantees each test starts from the same migrated schema with no
@@ -125,10 +124,10 @@ async def db_session(test_db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession
 
 
 @pytest_asyncio.fixture
-async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient]:
     """ASGI test client with ``get_async_db`` overridden to ``db_session``."""
 
-    async def _override_get_async_db() -> AsyncGenerator[AsyncSession, None]:
+    async def _override_get_async_db() -> AsyncGenerator[AsyncSession]:
         yield db_session
 
     fastapi_app.dependency_overrides[get_async_db] = _override_get_async_db

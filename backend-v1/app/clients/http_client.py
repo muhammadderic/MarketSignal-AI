@@ -8,7 +8,6 @@ single pooled connection set. Blocking clients are forbidden (ARC-002).
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 import httpx
 
@@ -22,7 +21,7 @@ DEFAULT_LIMITS = httpx.Limits(
 )
 DEFAULT_USER_AGENT = "MarketSignalAI/1.0 (+https://marketsignal.local)"
 
-_http_client: Optional[httpx.AsyncClient] = None
+_http_client: httpx.AsyncClient | None = None
 
 
 async def init_http_client() -> None:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
@@ -39,10 +39,10 @@ async def health_check(
     Returns:
         :class:`HealthCheckResponse` with status, database, and UTC timestamp.
     """
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     try:
         await db.execute(text("SELECT 1"))
-    except Exception as exc:  # noqa: BLE001 - surface all DB failures uniformly
+    except Exception as exc:
         logger.error("Health check database probe failed: %s", exc)
         raise ServiceUnavailableError(
             "Database connectivity check failed.",
