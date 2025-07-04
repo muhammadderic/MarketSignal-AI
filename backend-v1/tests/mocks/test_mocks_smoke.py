@@ -28,7 +28,10 @@ def test_rss_mock_malformed_is_not_parsed_cleanly() -> None:
 
 
 def test_groq_scoring_mocks_cover_valid_and_invalid() -> None:
-    assert "relevance_score" in mock_groq_scoring_response()["choices"][0]["message"]["content"]
+    assert (
+        "relevance_score"
+        in mock_groq_scoring_response()["choices"][0]["message"]["content"]
+    )
     for factory in (
         mock_groq_scoring_response_invalid_score_low,
         mock_groq_scoring_response_invalid_score_high,

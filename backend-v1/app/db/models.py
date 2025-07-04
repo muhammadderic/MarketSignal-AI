@@ -108,7 +108,9 @@ class Article(Base):
     source_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # UTC-normalized timestamps (ARC-004)
-    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    published_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     published_at_date: Mapped[date] = mapped_column(Date, nullable=False)
 
     # Workflow / relevance
@@ -130,7 +132,9 @@ class Article(Base):
     )
     scraped_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     scraping_error: Mapped[str | None] = mapped_column(Text, nullable=True)
-    scraped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    scraped_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Financial insight
     financial_insight: Mapped[str | None] = mapped_column(Text, nullable=True)

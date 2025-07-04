@@ -83,8 +83,10 @@ class Settings(BaseSettings):
         db_path.touch(exist_ok=True)
         return self
 
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
 
 settings = get_settings()

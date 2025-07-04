@@ -11,9 +11,7 @@ class UnitOfWork:
         self.session = AsyncSessionFactory()
         return self
 
-    async def __aexit__(
-        self, exc_type, exc_value, traceback
-    ) -> None:
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
         try:
             if self.session is not None:
                 if exc_type is not None:

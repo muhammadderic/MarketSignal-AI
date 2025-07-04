@@ -18,6 +18,7 @@ from app.db.database import async_engine
 setup_logging()
 logger = logging.getLogger(__name__)
 
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     """Manage async engine resources across the application lifecycle."""
@@ -31,6 +32,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
         await async_engine.dispose()
         await close_http_client()
         logger.info("MarketSignal AI API shutdown complete.")
+
 
 app = FastAPI(
     title=settings.APP_NAME,

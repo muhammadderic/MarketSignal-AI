@@ -16,9 +16,7 @@ from app.core.error_handlers import ServiceUnavailableError
 logger = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT = httpx.Timeout(connect=10.0, read=30.0, write=10.0, pool=10.0)
-DEFAULT_LIMITS = httpx.Limits(
-    max_keepalive_connections=20, max_connections=100
-)
+DEFAULT_LIMITS = httpx.Limits(max_keepalive_connections=20, max_connections=100)
 DEFAULT_USER_AGENT = "MarketSignalAI/1.0 (+https://marketsignal.local)"
 
 _http_client: httpx.AsyncClient | None = None

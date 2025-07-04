@@ -28,18 +28,20 @@ _SECRET_PATTERN = re.compile(
     r"(\s*[=:]\s*)([^\s,;]+)"
 )
 
+
 def _sanitize_exception_text(value: str) -> str:
     return _SECRET_PATTERN.sub(r"\1\2[REDACTED]", value)
 
+
 # ----------------------------
-#    Correlation ID context   
+#    Correlation ID context
 # ----------------------------
 correlation_id_ctx: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "correlation_id", default=None
 )
 
 # ---------------
-   # Redaction   
+# Redaction
 # ---------------
 REDACTED_VALUE = "[REDACTED]"
 REDACTED_KEYS: frozenset[str] = frozenset(
@@ -139,13 +141,11 @@ class RedactingFilter(logging.Filter):
 
 
 # ----------------
-#    Formatters   
+#    Formatters
 # ----------------
 def _utc_iso_from_epoch(created: float) -> str:
     """Convert a ``LogRecord.created`` epoch value to ISO 8601 UTC."""
-    return datetime.fromtimestamp(created, tz=UTC).strftime(
-        "%Y-%m-%dT%H:%M:%S.%fZ"
-    )
+    return datetime.fromtimestamp(created, tz=UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
 class JSONFormatter(logging.Formatter):
@@ -177,9 +177,7 @@ class JSONFormatter(logging.Formatter):
             payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload, ensure_ascii=False, default=str)
 
-    def _format_exception_safely(
-        self, record: logging.LogRecord
-    ) -> str:
+    def _format_exception_safely(self, record: logging.LogRecord) -> str:
         exception_text = self.formatException(record.exc_info)
         return _sanitize_exception_text(exception_text)
 
@@ -202,7 +200,11 @@ class DevelopmentFormatter(logging.Formatter):
         cid = correlation_id_ctx.get() or "-"
         ts = _utc_iso_from_epoch(record.created)
         context = getattr(record, "context", {}) or {}
-        ctx_suffix = f" {self._DIM}ctx={json.dumps(context, default=str)}{self._RESET}" if context else ""
+        ctx_suffix = (
+            f" {self._DIM}ctx={json.dumps(context, default=str)}{self._RESET}"
+            if context
+            else ""
+        )
 
         line = (
             f"{self._DIM}{ts}{self._RESET} "
@@ -216,7 +218,7 @@ class DevelopmentFormatter(logging.Formatter):
 
 
 # --------------
-#   Bootstrap   
+#   Bootstrap
 # --------------
 _CONFIGURED_FLAG = "_marketsignal_logging_configured"
 

@@ -64,40 +64,44 @@ def async_fault_handler(
             except httpx.TimeoutException as exc:
                 logger.warning(
                     "External call timed out",
-                    extra={"context": {
-                        "service": service_name,
-                        "exception": type(exc).__name__,
-                        "host": _safe_url(exc),
-                    }},
+                    extra={
+                        "context": {
+                            "service": service_name,
+                            "exception": type(exc).__name__,
+                            "host": _safe_url(exc),
+                        }
+                    },
                 )
                 raise ExternalServiceError(
                     f"{service_name} request timed out.",
-                    context={"service": service_name,
-                             "reason": type(exc).__name__},
+                    context={"service": service_name, "reason": type(exc).__name__},
                 ) from exc
             except httpx.NetworkError as exc:
                 logger.warning(
                     "External call network error",
-                    extra={"context": {
-                        "service": service_name,
-                        "exception": type(exc).__name__,
-                        "host": _safe_url(exc),
-                    }},
+                    extra={
+                        "context": {
+                            "service": service_name,
+                            "exception": type(exc).__name__,
+                            "host": _safe_url(exc),
+                        }
+                    },
                 )
                 raise ExternalServiceError(
                     f"{service_name} network error.",
-                    context={"service": service_name,
-                             "reason": type(exc).__name__},
+                    context={"service": service_name, "reason": type(exc).__name__},
                 ) from exc
             except httpx.HTTPStatusError as exc:
                 status = exc.response.status_code
                 logger.warning(
                     "External call HTTP error",
-                    extra={"context": {
-                        "service": service_name,
-                        "status_code": status,
-                        "host": _safe_url(exc),
-                    }},
+                    extra={
+                        "context": {
+                            "service": service_name,
+                            "status_code": status,
+                            "host": _safe_url(exc),
+                        }
+                    },
                 )
                 if status == 429:
                     raise RateLimitError(
@@ -116,8 +120,12 @@ def async_fault_handler(
             except groq.RateLimitError as exc:
                 logger.warning(
                     "Groq rate limit",
-                    extra={"context": {"service": service_name,
-                                       "exception": type(exc).__name__}},
+                    extra={
+                        "context": {
+                            "service": service_name,
+                            "exception": type(exc).__name__,
+                        }
+                    },
                 )
                 raise RateLimitError(
                     f"{service_name} rate limit exceeded.",
@@ -126,13 +134,16 @@ def async_fault_handler(
             except (groq.APIConnectionError, groq.APIStatusError) as exc:
                 logger.warning(
                     "Groq API error",
-                    extra={"context": {"service": service_name,
-                                       "exception": type(exc).__name__}},
+                    extra={
+                        "context": {
+                            "service": service_name,
+                            "exception": type(exc).__name__,
+                        }
+                    },
                 )
                 raise ServiceUnavailableError(
                     f"{service_name} is unavailable.",
-                    context={"service": service_name,
-                             "reason": type(exc).__name__},
+                    context={"service": service_name, "reason": type(exc).__name__},
                 ) from exc
 
         return wrapper

@@ -128,9 +128,7 @@ async def validation_exception_handler(
         error_code="VALIDATION_ERROR",
         request=request,
     )
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=body
-    )
+    return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=body)
 
 
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
@@ -158,21 +156,15 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     return JSONResponse(status_code=exc.status_code, content=body)
 
 
-async def unhandled_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all for unexpected exceptions; logs and returns a 500 envelope."""
-    logger.exception(
-        "Unhandled exception on %s %s", request.method, request.url.path
-    )
+    logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
     body = _envelope(
         detail="Internal server error.",
         error_code="INTERNAL_ERROR",
         request=request,
     )
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=body
-    )
+    return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=body)
 
 
 def register_exception_handlers(app: FastAPI) -> None:

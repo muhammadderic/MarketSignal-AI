@@ -25,8 +25,11 @@ def mock_groq_scoring_response(
                 "message": {
                     "role": "assistant",
                     "content": (
-                        "{\"relevance_score\": " + str(score)
-                        + ", \"relevance_reasoning\": \"" + reasoning + "\"}"
+                        '{"relevance_score": '
+                        + str(score)
+                        + ', "relevance_reasoning": "'
+                        + reasoning
+                        + '"}'
                     ),
                 },
                 "finish_reason": "stop",

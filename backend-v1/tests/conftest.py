@@ -60,15 +60,19 @@ def _run_alembic_upgrade(database_url: str) -> None:
     # database_url format: sqlite+aiosqlite:///C:/path/to/file.db
     prefix = "sqlite+aiosqlite:///"
     assert database_url.startswith(prefix), database_url
-    db_file = Path(database_url[len(prefix):])
+    db_file = Path(database_url[len(prefix) :])
     print(f"[conftest] DB exists: {db_file.exists()}  path={db_file}")
 
     import sqlite3
+
     if db_file.exists():
         with sqlite3.connect(db_file) as conn:
-            tables = {r[0] for r in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            )}
+            tables = {
+                r[0]
+                for r in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
+            }
             print(f"[conftest] tables after upgrade: {sorted(tables)}")
             assert "articles" in tables, f"articles missing; found: {sorted(tables)}"
 

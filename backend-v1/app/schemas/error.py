@@ -23,9 +23,7 @@ class APIErrorResponse(BaseModel):
     error_code: str | None = Field(
         default=None, description="Stable machine-readable error code."
     )
-    timestamp: str | None = Field(
-        default=None, description="ISO 8601 UTC timestamp."
-    )
+    timestamp: str | None = Field(default=None, description="ISO 8601 UTC timestamp.")
     context: dict[str, Any] | None = Field(
         default=None, description="Optional structured error context."
     )
