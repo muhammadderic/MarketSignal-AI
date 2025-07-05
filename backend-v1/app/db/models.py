@@ -27,7 +27,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.database import Base
 
 
-class WorkflowState(str, enum.Enum):
+class WorkflowState(enum.StrEnum):
     """Deterministic workflow states (``DATA_MODEL.md`` §Lifecycle)."""
 
     INGESTED = "Ingested"
@@ -37,7 +37,7 @@ class WorkflowState(str, enum.Enum):
     FINANCIAL_INSIGHT_EXTRACTED = "Financial Insight Extracted"
 
 
-class ScrapingStatus(str, enum.Enum):
+class ScrapingStatus(enum.StrEnum):
     """Localized scraping sub-state, isolated per item (ARC-006)."""
 
     PENDING = "PENDING"
@@ -68,7 +68,10 @@ class Article(Base):
             name="uq_articles_title_published_at_date",
         ),
         CheckConstraint(
-            "relevance_score IS NULL OR (relevance_score >= 1 AND relevance_score <= 5)",
+            (
+                "relevance_score IS NULL OR "
+                "(relevance_score >= 1 AND relevance_score <= 5)"
+            ),
             name="ck_articles_relevance_score",
         ),
         CheckConstraint(
@@ -158,4 +161,7 @@ class Article(Base):
     )
 
     def __repr__(self) -> str:
-        return f"Article(id={self.id!r}, title={self.title!r}, state={self.workflow_state!r})"
+        return (
+            f"Article(id={self.id!r}, title={self.title!r}, "
+            f"state={self.workflow_state!r})"
+        )

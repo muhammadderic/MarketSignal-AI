@@ -13,7 +13,9 @@ from typing import Any
 def mock_groq_scoring_response(
     *,
     score: int = 4,
-    reasoning: str = "Reports quarterly earnings with specific revenue and margin figures.",
+    reasoning: str = (
+        "Reports quarterly earnings with specific revenue and margin figures."
+    ),
 ) -> dict[str, Any]:
     """Return a Groq relevance-scoring payload envelope (valid by construction)."""
     return {

@@ -19,7 +19,7 @@ import logging
 import re
 import sys
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, ClassVar
 
 from app.core.config import settings
 
@@ -112,7 +112,8 @@ class RedactingFilter(logging.Filter):
     """Sanitize structured log fields before formatting.
 
     Applies to:
-        * ``record.args`` when it is a dict (``logger.info("x", {"authorization": ...})``).
+        * ``record.args`` when it is a dict, such as a dictionary passed to
+        * ``logger.info("x", {"authorization": ...})``
         * Any non-standard attribute on the record (i.e. ``extra={...}`` payloads),
           including a ``context`` dict.
         * ``record.msg`` when it is a dict (rare, but defensive).
@@ -185,7 +186,7 @@ class JSONFormatter(logging.Formatter):
 class DevelopmentFormatter(logging.Formatter):
     """Human-friendly, ANSI-colored formatter for local development."""
 
-    _LEVEL_COLORS = {
+    _LEVEL_COLORS: ClassVar[dict[str, str]] = {
         "DEBUG": "\033[36m",
         "INFO": "\033[32m",
         "WARNING": "\033[33m",
