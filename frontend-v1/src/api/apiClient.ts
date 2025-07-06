@@ -30,8 +30,6 @@ apiClient.interceptors.response.use(
       return Promise.reject(new ApiError(status, payload.detail));
     }
 
-    return Promise.reject(
-      new ApiError(status, error.message || 'Unexpected network error'),
-    );
+    return Promise.reject(new ApiError(status, error.message || 'Unexpected network error'));
   },
 );

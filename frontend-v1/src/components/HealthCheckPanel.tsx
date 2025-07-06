@@ -16,11 +16,7 @@ export function HealthCheckPanel() {
         <h2 className="text-lg font-semibold text-slate-900">Backend connectivity</h2>
       </header>
       {isPending && <p className="text-sm text-slate-500">Probing /api/v1/health…</p>}
-      {isError && (
-        <p className="text-sm text-red-600">
-          Health check failed: {error.message}
-        </p>
-      )}
+      {isError && <p className="text-sm text-red-600">Health check failed: {error.message}</p>}
       {data && (
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
           <dt className="font-medium text-slate-600">Status</dt>

@@ -22,9 +22,7 @@ describe('HealthCheckPanel', () => {
       error: null,
     });
     render(<HealthCheckPanel />);
-    expect(
-      screen.getByRole('heading', { name: /backend connectivity/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /backend connectivity/i })).toBeInTheDocument();
   });
 
   it('renders the pending message while the query is loading', () => {

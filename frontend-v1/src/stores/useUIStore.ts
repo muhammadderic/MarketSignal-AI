@@ -21,7 +21,7 @@ export const useUIStore = create<UIStoreState>((set) => ({
   selectedArticleIds: new Set<number>(),
   selectedDate: null,
   isEditorOpen: false,
-  
+
   toggleArticleSelection: (id: number) =>
     set((state) => {
       const next = new Set(state.selectedArticleIds);
