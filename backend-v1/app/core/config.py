@@ -48,6 +48,21 @@ class Settings(BaseSettings):
         description="Deployment environment label.",
     )
 
+    # === INGESTION ===
+    GOOGLE_NEWS_RSS_URL: str = Field(
+        default=(
+            "https://news.google.com/rss/search"
+            "?q=finance&hl=id&gl=ID&ceid=ID:id"
+        ),
+        description="Google News RSS feed URL (overrideable per-request).",
+    )
+    GOOGLE_RSS_TIMEOUT_SECONDS: float = Field(
+        default=15.0,
+        ge=1.0,
+        le=120.0,
+        description="RSS fetch timeout in seconds (INTEGRATIONS.md).",
+    )
+
     @model_validator(mode="after")
     def _ensure_sqlite_paths(self) -> "Settings":
         """Create the SQLite parent directory and file if they do not exist.
