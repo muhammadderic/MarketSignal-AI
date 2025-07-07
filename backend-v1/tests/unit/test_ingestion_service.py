@@ -194,3 +194,28 @@ async def test_ingest_persists_articles_with_utc_and_hash(
         assert row.scraped_content is None
         assert row.financial_insight is None
         assert row.scraping_error is None
+
+
+async def test_ingest_normalizes_timestamp_to_utc(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A non-UTC RFC-822 pubDate must be converted, not truncated."""
+    service = _make_service()
+    rss = _build_rss(
+        _item(
+            title="Offset Feed Entry",
+            link="https://news.google.com/rss/articles/CBMiOFF",
+            pub_date="Mon, 21 Oct 2026 14:30:00 +0530",
+        )
+    )
+    _patch_async_client(monkeypatch, _ok_handler(rss))
+
+    result = await service.ingest_google_news(db_session)
+    assert result.ingested_count == 1
+
+    row = (await db_session.execute(select(Article))).scalar_one()
+    expected = datetime(2026, 10, 21, 9, 0, 0, tzinfo=UTC)  # 14:30 +0530 → 09:00 UTC
+    stored = row.published_at.replace(tzinfo=UTC) if row.published_at.tzinfo is None else row.published_at.astimezone(UTC)
+    assert stored == expected
+    assert row.published_at_date.isoformat() == "2026-10-21"
