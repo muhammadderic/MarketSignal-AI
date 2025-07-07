@@ -5,6 +5,8 @@ Covers FEAT-001 acceptance criteria:
 * AC-001 — RSS XML fetched and parsed into Article rows.
 * AC-002 — UTC normalization of ``published_at`` + ``published_at_date``.
 * AC-003 — SHA-256 ``url_hash`` derived from ``google_url``.
+* AC-004 — duplicates via ``url_hash`` and ``(title, published_at_date)``
+  do not insert new rows.
 * AC-005 — initial states are ``Ingested`` / ``PENDING`` with null fields.
 """
 
@@ -219,3 +221,25 @@ async def test_ingest_normalizes_timestamp_to_utc(
     stored = row.published_at.replace(tzinfo=UTC) if row.published_at.tzinfo is None else row.published_at.astimezone(UTC)
     assert stored == expected
     assert row.published_at_date.isoformat() == "2026-10-21"
+
+
+# --------------------------------------------------------------
+# AC-004 — dedup via url_hash and via (title, published_at_date)
+# --------------------------------------------------------------
+async def test_duplicate_url_hash_is_skipped(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service = _make_service()
+    _patch_async_client(monkeypatch, _ok_handler(_VALID_RSS))
+    first = await service.ingest_google_news(db_session)
+    assert first.ingested_count == 3
+
+    # Second run, identical feed → all duplicates by url_hash
+    second = await service.ingest_google_news(db_session)
+    assert second.ingested_count == 0
+    assert second.duplicate_count == 3
+    assert second.failed_count == 0
+
+    total = (await db_session.execute(select(Article))).scalars().all()
+    assert len(total) == 3
