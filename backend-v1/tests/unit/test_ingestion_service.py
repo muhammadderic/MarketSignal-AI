@@ -8,6 +8,7 @@ Covers FEAT-001 acceptance criteria:
 * AC-004 — duplicates via ``url_hash`` and ``(title, published_at_date)``
   do not insert new rows.
 * AC-005 — initial states are ``Ingested`` / ``PENDING`` with null fields.
+* AC-007 — retries on transport/5xx; HTTP 502 after exhaustion.
 """
 
 from __future__ import annotations
@@ -278,3 +279,31 @@ async def test_composite_title_date_duplicate_is_skipped(
     rows = (await db_session.execute(select(Article))).scalars().all()
     assert len(rows) == 1
     assert rows[0].google_url.endswith("/A")
+
+
+# ----------------------------
+# AC-007 — retries + final 502
+# ----------------------------
+async def test_retries_twice_then_succeeds(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+    patched_sleep: AsyncMock,
+) -> None:
+    service = _make_service()
+    calls: list[int] = []
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        if len(calls) < 3:  # fail first two, then succeed
+            return httpx.Response(500, text="upstream error")
+        return httpx.Response(200, text=_VALID_RSS)
+
+    _patch_async_client(monkeypatch, httpx.MockTransport(handler))
+
+    result = await service.ingest_google_news(db_session)
+
+    assert result.ingested_count == 3
+    assert len(calls) == 3
+    assert patched_sleep.await_count == 2  # 2 retries between 3 attempts
+    assert patched_sleep.await_args is not None
+    assert patched_sleep.await_args.args == (2.0,)
