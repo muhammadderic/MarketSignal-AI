@@ -243,3 +243,38 @@ async def test_duplicate_url_hash_is_skipped(
 
     total = (await db_session.execute(select(Article))).scalars().all()
     assert len(total) == 3
+
+
+async def test_composite_title_date_duplicate_is_skipped(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Different URL, same (title, published_at_date) → composite constraint."""
+    service = _make_service()
+    first_rss = _build_rss(
+        _item(
+            title="Same Headline",
+            link="https://news.google.com/rss/articles/A",
+            pub_date="Mon, 21 Oct 2026 08:00:00 GMT",
+        )
+    )
+    _patch_async_client(monkeypatch, _ok_handler(first_rss))
+    assert (await service.ingest_google_news(db_session)).ingested_count == 1
+
+    second_rss = _build_rss(
+        _item(
+            title="Same Headline",
+            link="https://news.google.com/rss/articles/B",  # different url_hash
+            pub_date="Mon, 21 Oct 2026 20:00:00 GMT",  # same UTC date
+        )
+    )
+    _patch_async_client(monkeypatch, _ok_handler(second_rss))
+    second = await service.ingest_google_news(db_session)
+
+    assert second.ingested_count == 0
+    assert second.duplicate_count == 1
+    assert second.failed_count == 0
+
+    rows = (await db_session.execute(select(Article))).scalars().all()
+    assert len(rows) == 1
+    assert rows[0].google_url.endswith("/A")
