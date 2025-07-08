@@ -46,6 +46,12 @@ _RSS_FOOTER = """
 """
 
 
+# Snapshot the real class once; the ingestion module references the same
+# ``httpx`` object, so ``setattr`` on ``app.services.ingestion.httpx`` mutates
+# the global ``httpx`` module attribute.
+_REAL_ASYNC_CLIENT = httpx.AsyncClient
+
+
 def _item(
     *,
     title: str | None = "Market rallies on rate-cut hopes",
@@ -106,12 +112,11 @@ def _patch_async_client(
     referenced by every module-level ``httpx`` binding).
     """
 
-    real_async_client = httpx.AsyncClient  # snapshot before patching
-
     def _factory(*args: Any, **kwargs: Any) -> httpx.AsyncClient:
         # Ignore the service's timeout kwarg; MockTransport does not need it.
         del args, kwargs
-        return real_async_client(transport=handler)
+        # return real_async_client(transport=handler)
+        return _REAL_ASYNC_CLIENT(transport=handler)
 
     monkeypatch.setattr(
         "app.services.ingestion.httpx.AsyncClient",
@@ -279,7 +284,50 @@ async def test_composite_title_date_duplicate_is_skipped(
     rows = (await db_session.execute(select(Article))).scalars().all()
     assert len(rows) == 1
     assert rows[0].google_url.endswith("/A")
+    
 
+async def test_mixed_batch_partial_duplicates(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Batch mixing new rows and an existing url_hash."""
+    service = _make_service()
+    first_rss = _build_rss(
+        _item(
+            title="Existing Article",
+            link="https://news.google.com/rss/articles/EXIST",
+            pub_date="Mon, 21 Oct 2026 09:00:00 GMT",
+        )
+    )
+    _patch_async_client(monkeypatch, _ok_handler(first_rss))
+    first = await service.ingest_google_news(db_session)
+    assert first.ingested_count == 1
+
+    mixed_rss = _build_rss(
+        _item(
+            title="Existing Article",
+            link="https://news.google.com/rss/articles/EXIST",
+            pub_date="Mon, 21 Oct 2026 09:00:00 GMT",
+        ),
+        _item(
+            title="Fresh Article A",
+            link="https://news.google.com/rss/articles/NEWA",
+            pub_date="Tue, 22 Oct 2026 07:00:00 GMT",
+        ),
+        _item(
+            title="Fresh Article B",
+            link="https://news.google.com/rss/articles/NEWB",
+            pub_date="Tue, 22 Oct 2026 08:00:00 GMT",
+        ),
+    )
+    _patch_async_client(monkeypatch, _ok_handler(mixed_rss))
+    result = await service.ingest_google_news(db_session)
+
+    assert result.ingested_count == 2
+    assert result.duplicate_count == 1
+    assert result.failed_count == 0
+    assert len((await db_session.execute(select(Article))).scalars().all()) == 3
+    
 
 # ----------------------------
 # AC-007 — retries + final 502
