@@ -24,6 +24,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.error_handlers import ExternalServiceError
 from app.db.models import Article
 from app.services.ingestion import IngestionService
 from app.db.repositories.article_repository import ArticleRepository
@@ -355,3 +356,23 @@ async def test_retries_twice_then_succeeds(
     assert patched_sleep.await_count == 2  # 2 retries between 3 attempts
     assert patched_sleep.await_args is not None
     assert patched_sleep.await_args.args == (2.0,)
+
+
+async def test_exhausted_retries_raise_external_service_error(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+    patched_sleep: AsyncMock,
+) -> None:
+    service = _make_service()
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503, text="unavailable")
+
+    _patch_async_client(monkeypatch, httpx.MockTransport(handler))
+
+    with pytest.raises(ExternalServiceError) as excinfo:
+        await service.ingest_google_news(db_session)
+
+    assert excinfo.value.status_code == 502
+    assert excinfo.value.error_code == "EXTERNAL_SERVICE_ERROR"
+    assert patched_sleep.await_count == 2
+    assert (await db_session.execute(select(Article))).scalars().all() == []
