@@ -397,3 +397,22 @@ async def test_network_transport_error_triggers_retries(
 
     assert len(calls) == 3
     assert patched_sleep.await_count == 2
+
+
+async def test_feed_url_override_is_used(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service = _make_service()
+    captured: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(str(request.url))
+        return httpx.Response(200, text=_VALID_RSS)
+
+    _patch_async_client(monkeypatch, httpx.MockTransport(handler))
+
+    override = "https://news.google.com/rss/search?q=override"
+    await service.ingest_google_news(db_session, feed_url_override=override)
+
+    assert captured == [override]
