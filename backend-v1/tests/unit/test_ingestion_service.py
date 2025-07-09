@@ -376,3 +376,24 @@ async def test_exhausted_retries_raise_external_service_error(
     assert excinfo.value.error_code == "EXTERNAL_SERVICE_ERROR"
     assert patched_sleep.await_count == 2
     assert (await db_session.execute(select(Article))).scalars().all() == []
+
+
+async def test_network_transport_error_triggers_retries(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+    patched_sleep: AsyncMock,
+) -> None:
+    service = _make_service()
+    calls: list[int] = []
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        raise httpx.ConnectError("boom")
+
+    _patch_async_client(monkeypatch, httpx.MockTransport(handler))
+
+    with pytest.raises(ExternalServiceError):
+        await service.ingest_google_news(db_session)
+
+    assert len(calls) == 3
+    assert patched_sleep.await_count == 2
