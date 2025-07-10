@@ -473,3 +473,19 @@ async def test_unparseable_xml_raises_external_service_error(
 
     with pytest.raises(ExternalServiceError):
         await service.ingest_google_news(db_session)
+
+
+async def test_empty_feed_returns_zero_counts(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service = _make_service()
+    empty_rss = _RSS_HEADER + _RSS_FOOTER
+    _patch_async_client(monkeypatch, _ok_handler(empty_rss))
+
+    result = await service.ingest_google_news(db_session)
+
+    assert result.status == "success"
+    assert result.ingested_count == 0
+    assert result.duplicate_count == 0
+    assert result.failed_count == 0
