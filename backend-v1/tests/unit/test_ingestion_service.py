@@ -9,6 +9,10 @@ Covers FEAT-001 acceptance criteria:
   do not insert new rows.
 * AC-005 — initial states are ``Ingested`` / ``PENDING`` with null fields.
 * AC-007 — retries on transport/5xx; HTTP 502 after exhaustion.
+* AC-008 — malformed entries are skipped without aborting the batch.
+
+Network I/O is intercepted via :class:`httpx.MockTransport`. Sleep is patched
+so retry tests run instantly and can assert the retry count.
 """
 
 from __future__ import annotations
@@ -95,6 +99,27 @@ _VALID_RSS = _build_rss(
         link="https://news.google.com/rss/articles/CBMiC",
         pub_date="Tue, 22 Oct 2026 06:00:00 GMT",
         source="Reuters",
+    ),
+)
+
+
+_MIXED_RSS = _build_rss(
+    _item(
+        title="Valid Entry 1",
+        link="https://news.google.com/rss/articles/CBMiV1",
+        pub_date="Mon, 21 Oct 2026 09:00:00 GMT",
+    ),
+    _item(title=None, link="https://news.google.com/rss/articles/CBMiX"),  # missing title
+    _item(title="Missing Link Entry", link=None),  # missing link
+    _item(
+        title="Unparseable Date Entry",
+        link="https://news.google.com/rss/articles/CBMiZ",
+        pub_date="not-a-date",
+    ),
+    _item(
+        title="Valid Entry 2",
+        link="https://news.google.com/rss/articles/CBMiV2",
+        pub_date="Mon, 21 Oct 2026 11:00:00 GMT",
     ),
 )
 
@@ -416,3 +441,24 @@ async def test_feed_url_override_is_used(
     await service.ingest_google_news(db_session, feed_url_override=override)
 
     assert captured == [override]
+
+
+# -----------------------------------
+# AC-008 — malformed entries isolated
+# -----------------------------------
+async def test_malformed_entries_are_skipped_with_failed_count(
+    service: IngestionService,
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_async_client(monkeypatch, _ok_handler(_MIXED_RSS))
+
+    result = await service.ingest_google_news(db_session)
+
+    assert result.ingested_count == 2
+    assert result.failed_count == 3
+    assert result.duplicate_count == 0
+
+    rows = (await db_session.execute(select(Article))).scalars().all()
+    titles = {r.title for r in rows}
+    assert titles == {"Valid Entry 1", "Valid Entry 2"}
