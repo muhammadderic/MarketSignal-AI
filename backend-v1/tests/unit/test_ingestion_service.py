@@ -447,10 +447,10 @@ async def test_feed_url_override_is_used(
 # AC-008 — malformed entries isolated
 # -----------------------------------
 async def test_malformed_entries_are_skipped_with_failed_count(
-    service: IngestionService,
     db_session: AsyncSession,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    service = _make_service()
     _patch_async_client(monkeypatch, _ok_handler(_MIXED_RSS))
 
     result = await service.ingest_google_news(db_session)
@@ -462,3 +462,14 @@ async def test_malformed_entries_are_skipped_with_failed_count(
     rows = (await db_session.execute(select(Article))).scalars().all()
     titles = {r.title for r in rows}
     assert titles == {"Valid Entry 1", "Valid Entry 2"}
+
+
+async def test_unparseable_xml_raises_external_service_error(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service = _make_service()
+    _patch_async_client(monkeypatch, _ok_handler("<not-rss>not valid at all"))
+
+    with pytest.raises(ExternalServiceError):
+        await service.ingest_google_news(db_session)
