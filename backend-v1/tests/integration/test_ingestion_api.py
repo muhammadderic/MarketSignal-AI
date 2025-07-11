@@ -67,3 +67,15 @@ async def test_ingest_returns_200_and_persists_rows(
     assert len(rows) == 1
     assert rows[0].workflow_state == "Ingested"
     assert rows[0].scraping_status == "PENDING"
+
+
+async def test_ingest_accepts_empty_body(
+    async_client: AsyncClient,
+) -> None:
+    with respx.mock(assert_all_called=True) as router:
+        router.get(url__startswith=RSS_URL_DEFAULT_MATCH).mock(
+            return_value=httpx.Response(200, text=_rss())
+        )
+        response = await async_client.post("/api/v1/ingest")
+
+    assert response.status_code == 200, response.text
