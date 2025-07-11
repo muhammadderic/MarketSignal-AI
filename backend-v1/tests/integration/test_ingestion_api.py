@@ -1,0 +1,69 @@
+"""Integration tests for ``POST /api/v1/ingest``.
+
+Exercises the FastAPI route mounted on ``app.main:app`` via the shared
+``async_client`` fixture (``get_async_db`` overridden to ``db_session``).
+
+Network I/O uses :class:`respx` for deterministic, offline responses.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+import httpx
+import pytest
+import respx
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.models import Article
+
+
+RSS_URL_DEFAULT_MATCH = "https://news.google.com/rss/search"
+
+_RSS_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+  <title>Test</title>
+  <link>https://news.google.com/</link>
+  <description>Feed</description>
+  <item>
+    <title>{title}</title>
+    <link>{link}</link>
+    <pubDate>Mon, 21 Oct 2026 12:00:00 GMT</pubDate>
+    <source url="https://example.com">Reuters</source>
+  </item>
+</channel>
+</rss>
+"""
+
+
+def _rss(title: str = "Test Headline", link: str = "https://news.google.com/rss/articles/1") -> str:
+    return _RSS_TEMPLATE.format(title=title, link=link)
+
+# ----------
+# Happy path
+# ----------
+async def test_ingest_returns_200_and_persists_rows(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    with respx.mock(assert_all_called=True) as router:
+        router.get(url__startswith=RSS_URL_DEFAULT_MATCH).mock(
+            return_value=httpx.Response(200, text=_rss())
+        )
+        response = await async_client.post("/api/v1/ingest", json={})
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["status"] == "success"
+    assert body["ingested_count"] == 1
+    assert body["duplicate_count"] == 0
+    assert body["failed_count"] == 0
+    assert body["ingested_at"].endswith("Z") or "+" in body["ingested_at"]
+
+    rows = (await db_session.execute(select(Article))).scalars().all()
+    assert len(rows) == 1
+    assert rows[0].workflow_state == "Ingested"
+    assert rows[0].scraping_status == "PENDING"
