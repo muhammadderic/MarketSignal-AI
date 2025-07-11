@@ -79,3 +79,38 @@ async def test_ingest_accepts_empty_body(
         response = await async_client.post("/api/v1/ingest")
 
     assert response.status_code == 200, response.text
+
+
+async def test_ingest_honors_feed_url_override(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    override_url = "https://example.com/custom/feed.xml"
+
+    # assert_all_called=False: the default route is registered specifically to
+    # prove it is NOT called; we assert that explicitly below.
+    with respx.mock(assert_all_called=False) as router:
+        override_route = router.get(override_url).mock(
+            return_value=httpx.Response(
+                200, 
+                text=_rss(
+                    title="Override Title", 
+                    link="https://news.google.com/rss/articles/OVR"
+                )
+            )
+        )
+        default_route = router.get(url__startswith=RSS_URL_DEFAULT_MATCH).mock(
+            return_value=httpx.Response(200, text=_rss())
+        )
+
+        response = await async_client.post(
+            "/api/v1/ingest", json={"feed_url": override_url}
+        )
+
+    assert response.status_code == 200, response.text
+    assert override_route.called is True
+    assert default_route.called is False
+
+    rows = (await db_session.execute(select(Article))).scalars().all()
+    assert len(rows) == 1
+    assert rows[0].title == "Override Title"
