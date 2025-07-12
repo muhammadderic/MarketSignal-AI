@@ -114,3 +114,25 @@ async def test_ingest_honors_feed_url_override(
     rows = (await db_session.execute(select(Article))).scalars().all()
     assert len(rows) == 1
     assert rows[0].title == "Override Title"
+
+
+# ----------------------------------------
+# AC-004 — re-ingesting returns duplicates
+# ----------------------------------------
+async def test_reingest_reports_duplicates(
+    async_client: AsyncClient,
+) -> None:
+    with respx.mock(assert_all_called=True) as router:
+        router.get(url__startswith=RSS_URL_DEFAULT_MATCH).mock(
+            return_value=httpx.Response(200, text=_rss())
+        )
+        first = await async_client.post("/api/v1/ingest", json={})
+        second = await async_client.post("/api/v1/ingest", json={})
+
+    assert first.status_code == 200
+    assert first.json()["ingested_count"] == 1
+
+    assert second.status_code == 200
+    second_body = second.json()
+    assert second_body["ingested_count"] == 0
+    assert second_body["duplicate_count"] == 1
