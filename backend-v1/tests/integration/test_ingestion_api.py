@@ -136,3 +136,34 @@ async def test_reingest_reports_duplicates(
     second_body = second.json()
     assert second_body["ingested_count"] == 0
     assert second_body["duplicate_count"] == 1
+
+
+# ------------------------------------------------
+# AC-007 — HTTP 502 on exhausted upstream failures
+# ------------------------------------------------
+async def test_ingest_returns_502_when_feed_unreachable(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Retries would otherwise take 4s; patch sleep to keep the test fast.
+    from unittest.mock import AsyncMock
+
+    monkeypatch.setattr(
+        "app.services.ingestion.asyncio.sleep", AsyncMock(return_value=None)
+    )
+
+    with respx.mock(assert_all_called=False) as router:
+        route = router.get(url__startswith=RSS_URL_DEFAULT_MATCH).mock(
+            return_value=httpx.Response(503, text="unavailable")
+        )
+        response = await async_client.post("/api/v1/ingest", json={})
+
+    assert response.status_code == 502, response.text
+    assert route.call_count == 3  # 1 attempt + 2 retries
+
+    body = response.json()
+    assert body["error_code"] == "EXTERNAL_SERVICE_ERROR"
+    assert "detail" in body
+
+    assert (await db_session.execute(select(Article))).scalars().all() == []
