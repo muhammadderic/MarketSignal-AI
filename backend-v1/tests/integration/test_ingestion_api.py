@@ -167,3 +167,24 @@ async def test_ingest_returns_502_when_feed_unreachable(
     assert "detail" in body
 
     assert (await db_session.execute(select(Article))).scalars().all() == []
+
+
+# ------------------------------------
+# AC-010 — HTTP 422 on invalid payload
+# ------------------------------------
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"feed_url": 42},
+        {"feed_url": "not-a-valid-url"},
+        {"unexpected_field": "x"},
+    ],
+)
+async def test_ingest_invalid_payload_returns_422(
+    async_client: AsyncClient,
+    payload: dict[str, Any],
+) -> None:
+    response = await async_client.post("/api/v1/ingest", json=payload)
+    assert response.status_code == 422, response.text
+    body = response.json()
+    assert body["error_code"] == "VALIDATION_ERROR"
