@@ -188,3 +188,38 @@ async def test_ingest_invalid_payload_returns_422(
     assert response.status_code == 422, response.text
     body = response.json()
     assert body["error_code"] == "VALIDATION_ERROR"
+
+
+# ------------------------------------------
+# AC-008 — malformed entry isolation via API
+# ------------------------------------------
+async def test_ingest_api_isolates_malformed_entries(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    malformed_rss = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>T</title>
+  <item><title>Good</title><link>https://news.google.com/rss/articles/GOOD</link>
+    <pubDate>Mon, 21 Oct 2026 12:00:00 GMT</pubDate></item>
+  <item><title>Missing Link</title>
+    <pubDate>Mon, 21 Oct 2026 12:00:00 GMT</pubDate></item>
+  <item><title>Bad Date</title><link>https://news.google.com/rss/articles/BAD</link>
+    <pubDate>not-a-date</pubDate></item>
+</channel></rss>
+"""
+
+    with respx.mock(assert_all_called=True) as router:
+        router.get(url__startswith=RSS_URL_DEFAULT_MATCH).mock(
+            return_value=httpx.Response(200, text=malformed_rss)
+        )
+        response = await async_client.post("/api/v1/ingest", json={})
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["ingested_count"] == 1
+    assert body["failed_count"] == 2
+    assert body["duplicate_count"] == 0
+
+    rows = (await db_session.execute(select(Article))).scalars().all()
+    assert len(rows) == 1
+    assert rows[0].title == "Good"
