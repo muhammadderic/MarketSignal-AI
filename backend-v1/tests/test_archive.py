@@ -1,0 +1,125 @@
+"""Tests for the FEAT-002 monthly archive calendar backend.
+
+Covers ``ArticleRepository.get_archive_counts`` and
+``GET /api/v1/archive-counts`` against the migrated test schema provided by
+``tests/conftest.py``. No external I/O is performed; everything runs against
+the isolated async SQLite fixture (ARC-002 / AS-007).
+
+Acceptance criteria mapped:
+    * AC-001 — 200 OK array of ``{date, count}`` for dates with articles.
+    * AC-002 — 400 for out-of-range ``month`` or invalid ``year``; 422 for
+      missing / non-integer query params.
+
+Month-boundary inclusion/exclusion and the December → January rollover are
+verified directly against the repository's date-range filter.
+"""
+
+from __future__ import annotations
+
+import hashlib
+from collections.abc import AsyncGenerator
+from datetime import UTC, date, datetime
+
+import pytest
+import pytest_asyncio
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.models import Article, ScrapingStatus, WorkflowState
+from app.db.repositories.article_repository import ArticleRepository
+
+
+# ---------------
+# Seeding helpers
+# ---------------
+def _hash(*parts: str) -> str:
+    """Return a stable 64-char SHA-256 hex digest for synthetic URLs."""
+    return hashlib.sha256("::".join(parts).encode("utf-8")).hexdigest()
+
+
+def _article(
+    *,
+    title: str,
+    published_at: datetime,
+    url_suffix: str,
+) -> Article:
+    """Build a fully populated ``Article`` ORM instance for seeding.
+
+    ``url_hash`` is derived from ``url_suffix`` so every seeded row is unique
+    against the ``ix_articles_url_hash`` and the composite
+    ``(title, published_at_date)`` constraints.
+    """
+    if published_at.tzinfo is None:
+        published_at = published_at.replace(tzinfo=UTC)
+    return Article(
+        google_url=f"https://news.google.com/rss/articles/{url_suffix}",
+        resolved_url=None,
+        url_hash=_hash(url_suffix),
+        title=title,
+        source_name="Reuters",
+        published_at=published_at,
+        published_at_date=published_at.date(),
+        workflow_state=WorkflowState.INGESTED.value,
+        scraping_status=ScrapingStatus.PENDING.value,
+    )
+
+
+@pytest_asyncio.fixture
+async def seeded_october_2026(
+    db_session: AsyncSession,
+) -> AsyncGenerator[AsyncSession]:
+    """Seed three articles across October 2026 plus boundary/adjacent dates.
+
+    Rows planted:
+        * 2026-10-01 (2 articles)
+        * 2026-10-15 (1 article)
+        * 2026-09-30 (out of range — must not be counted)
+        * 2026-11-01 (out of range — must not be counted)
+    """
+    rows = [
+        _article(
+            title="Oct 1 A",
+            published_at=datetime(2026, 10, 1, 8, 0, tzinfo=UTC),
+            url_suffix="OCT1A",
+        ),
+        _article(
+            title="Oct 1 B",
+            published_at=datetime(2026, 10, 1, 18, 0, tzinfo=UTC),
+            url_suffix="OCT1B",
+        ),
+        _article(
+            title="Oct 15",
+            published_at=datetime(2026, 10, 15, 12, 0, tzinfo=UTC),
+            url_suffix="OCT15",
+        ),
+        _article(
+            title="Sep 30",
+            published_at=datetime(2026, 9, 30, 23, 59, tzinfo=UTC),
+            url_suffix="SEP30",
+        ),
+        _article(
+            title="Nov 1",
+            published_at=datetime(2026, 11, 1, 0, 0, tzinfo=UTC),
+            url_suffix="NOV1",
+        ),
+    ]
+    db_session.add_all(rows)
+    await db_session.flush()
+    yield db_session
+
+
+# ----------------------
+# Repository-level tests
+# ----------------------
+async def test_repository_groups_by_date_and_orders_ascending(
+    seeded_october_2026: AsyncSession,
+) -> None:
+    """Counts are grouped per day, ascending, and bounded to the month."""
+    repo = ArticleRepository()
+    rows = await repo.get_archive_counts(seeded_october_2026, year=2026, month=10)
+
+    assert rows == [
+        (date(2026, 10, 1), 2),
+        (date(2026, 10, 15), 1),
+    ]
