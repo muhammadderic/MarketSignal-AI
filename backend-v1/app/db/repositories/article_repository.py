@@ -10,6 +10,7 @@ import logging
 from datetime import UTC, date, datetime
 from typing import Any
 
+from sqlalchemy import func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -90,16 +91,56 @@ class ArticleRepository:
         if not hashes:
             return set()
 
-        from sqlalchemy import select
-
         result = await db.execute(
             select(Article.url_hash).where(Article.url_hash.in_(hashes))
         )
         return set(result.scalars().all())
+
+    async def get_archive_counts(
+        self,
+        db: AsyncSession,
+        year: int,
+        month: int,
+    ) -> list[tuple[date, int]]:
+        """Aggregate article counts grouped by UTC publication date.
+
+        Filters strictly to the requested calendar month using the indexed
+        ``published_at_date`` column (``ix_articles_published_at_date``), and
+        omits dates with zero articles per ``API_CONTRACTS.md``.
+
+        Args:
+            db: Active async session.
+            year: Calendar year (validated by the endpoint, ``> 2000``).
+            month: Calendar month (validated by the endpoint, ``1``–``12``).
+
+        Returns:
+            List of ``(published_at_date, count)`` tuples ordered ascending by
+            date. Empty when no articles exist in the month.
+        """
+        first_of_month = date(year, month, 1)
+        if month == 12:
+            first_of_next_month = date(year + 1, 1, 1)
+        else:
+            first_of_next_month = date(year, month + 1, 1)
+
+        stmt = (
+            select(
+                Article.published_at_date,
+                func.count(Article.id).label("article_count"),
+            )
+            .where(
+                Article.published_at_date >= first_of_month,
+                Article.published_at_date < first_of_next_month,
+            )
+            .group_by(Article.published_at_date)
+            .order_by(Article.published_at_date.asc())
+        )
+        result = await db.execute(stmt)
+        return [(row[0], int(row[1])) for row in result.all()]
 
 
 def _utcnow_factory() -> datetime:  # pragma: no cover - helper for tests
     return datetime.now(UTC)
 
 
-__all__ = ["ArticleRepository", "date"]
+__all__ = ["ArticleRepository"]
