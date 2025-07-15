@@ -123,3 +123,14 @@ async def test_repository_groups_by_date_and_orders_ascending(
         (date(2026, 10, 1), 2),
         (date(2026, 10, 15), 1),
     ]
+
+async def test_repository_excludes_adjacent_month_boundaries(
+    seeded_october_2026: AsyncSession,
+) -> None:
+    """Sep 30 and Nov 1 rows must never appear in the October aggregate."""
+    repo = ArticleRepository()
+    rows = await repo.get_archive_counts(seeded_october_2026, year=2026, month=10)
+
+    returned_dates = {d for d, _ in rows}
+    assert date(2026, 9, 30) not in returned_dates
+    assert date(2026, 11, 1) not in returned_dates
