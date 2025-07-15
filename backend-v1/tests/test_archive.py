@@ -143,3 +143,30 @@ async def test_repository_returns_empty_for_month_without_articles(
     repo = ArticleRepository()
     rows = await repo.get_archive_counts(db_session, year=2024, month=1)
     assert rows == []
+
+
+async def test_repository_december_rollover_includes_dec_31(
+    db_session: AsyncSession,
+) -> None:
+    """December range ends at ``year+1-01-01`` exclusive; Dec 31 counts."""
+    db_session.add(
+        _article(
+            title="Dec 31",
+            published_at=datetime(2025, 12, 31, 23, 0, tzinfo=UTC),
+            url_suffix="DEC31",
+        )
+    )
+    # A January 1st row must not be counted.
+    db_session.add(
+        _article(
+            title="Jan 1",
+            published_at=datetime(2026, 1, 1, 0, 0, tzinfo=UTC),
+            url_suffix="JAN1",
+        )
+    )
+    await db_session.flush()
+
+    repo = ArticleRepository()
+    rows = await repo.get_archive_counts(db_session, year=2025, month=12)
+
+    assert rows == [(date(2025, 12, 31), 1)]
