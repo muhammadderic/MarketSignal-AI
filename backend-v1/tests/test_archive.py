@@ -124,6 +124,7 @@ async def test_repository_groups_by_date_and_orders_ascending(
         (date(2026, 10, 15), 1),
     ]
 
+
 async def test_repository_excludes_adjacent_month_boundaries(
     seeded_october_2026: AsyncSession,
 ) -> None:
@@ -134,3 +135,11 @@ async def test_repository_excludes_adjacent_month_boundaries(
     returned_dates = {d for d, _ in rows}
     assert date(2026, 9, 30) not in returned_dates
     assert date(2026, 11, 1) not in returned_dates
+
+
+async def test_repository_returns_empty_for_month_without_articles(
+    db_session: AsyncSession,
+) -> None:
+    repo = ArticleRepository()
+    rows = await repo.get_archive_counts(db_session, year=2024, month=1)
+    assert rows == []
