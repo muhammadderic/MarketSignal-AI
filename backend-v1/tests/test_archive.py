@@ -189,3 +189,15 @@ async def test_endpoint_returns_200_and_expected_payload(
         {"date": "2026-10-01", "count": 2},
         {"date": "2026-10-15", "count": 1},
     ]
+
+
+async def test_endpoint_returns_empty_array_when_no_articles(
+    async_client: AsyncClient,
+) -> None:
+    response = await async_client.get(
+        "/api/v1/archive-counts",
+        params={"year": 2024, "month": 1},
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json() == []
