@@ -170,3 +170,22 @@ async def test_repository_december_rollover_includes_dec_31(
     rows = await repo.get_archive_counts(db_session, year=2025, month=12)
 
     assert rows == [(date(2025, 12, 31), 1)]
+
+
+# -------------------------------------
+# API-level tests — happy path (AC-001)
+# -------------------------------------
+async def test_endpoint_returns_200_and_expected_payload(
+    async_client: AsyncClient,
+    seeded_october_2026: AsyncSession,
+) -> None:
+    response = await async_client.get(
+        "/api/v1/archive-counts",
+        params={"year": 2026, "month": 10},
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json() == [
+        {"date": "2026-10-01", "count": 2},
+        {"date": "2026-10-15", "count": 1},
+    ]
