@@ -201,3 +201,22 @@ async def test_endpoint_returns_empty_array_when_no_articles(
 
     assert response.status_code == 200, response.text
     assert response.json() == []
+
+
+# -------------------------------------
+# API-level tests — validation (AC-002)
+# -------------------------------------
+@pytest.mark.parametrize("month", [0, -1, 13, 99])
+async def test_endpoint_month_out_of_range_returns_400(
+    async_client: AsyncClient,
+    month: int,
+) -> None:
+    response = await async_client.get(
+        "/api/v1/archive-counts",
+        params={"year": 2026, "month": month},
+    )
+
+    assert response.status_code == 400, response.text
+    body = response.json()
+    assert body["error_code"] == "BAD_REQUEST"
+    assert "month" in body["detail"]
