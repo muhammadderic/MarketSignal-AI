@@ -220,3 +220,20 @@ async def test_endpoint_month_out_of_range_returns_400(
     body = response.json()
     assert body["error_code"] == "BAD_REQUEST"
     assert "month" in body["detail"]
+
+
+@pytest.mark.parametrize("year", [1999, 2000, 0, -2026])
+async def test_endpoint_year_not_greater_than_min_returns_400(
+    async_client: AsyncClient,
+    year: int,
+) -> None:
+    """Boundary: ``year <= 2000`` is rejected per R-001."""
+    response = await async_client.get(
+        "/api/v1/archive-counts",
+        params={"year": year, "month": 1},
+    )
+
+    assert response.status_code == 400, response.text
+    body = response.json()
+    assert body["error_code"] == "BAD_REQUEST"
+    assert "year" in body["detail"]
