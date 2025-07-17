@@ -237,3 +237,16 @@ async def test_endpoint_year_not_greater_than_min_returns_400(
     body = response.json()
     assert body["error_code"] == "BAD_REQUEST"
     assert "year" in body["detail"]
+
+
+async def test_endpoint_year_just_above_min_returns_200(
+    async_client: AsyncClient,
+) -> None:
+    """Boundary: ``year = 2001`` is accepted (empty result permitted)."""
+    response = await async_client.get(
+        "/api/v1/archive-counts",
+        params={"year": 2001, "month": 1},
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json() == []
