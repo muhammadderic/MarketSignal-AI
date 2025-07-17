@@ -250,3 +250,23 @@ async def test_endpoint_year_just_above_min_returns_200(
 
     assert response.status_code == 200, response.text
     assert response.json() == []
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"month": 1},                # missing year
+        {"year": 2026},              # missing month
+        {},                          # both missing
+        {"year": "abc", "month": 1}, # non-integer year
+        {"year": 2026, "month": "x"},# non-integer month
+    ],
+)
+async def test_endpoint_invalid_or_missing_query_returns_422(
+    async_client: AsyncClient,
+    params: dict[str, object],
+) -> None:
+    response = await async_client.get("/api/v1/archive-counts", params=params)
+
+    assert response.status_code == 422, response.text
+    assert response.json()["error_code"] == "VALIDATION_ERROR"
