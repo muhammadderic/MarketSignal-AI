@@ -270,3 +270,14 @@ async def test_endpoint_invalid_or_missing_query_returns_422(
 
     assert response.status_code == 422, response.text
     assert response.json()["error_code"] == "VALIDATION_ERROR"
+
+
+# -------------------------------------------------------------------
+# Isolation sanity: the seeded fixture does not leak into other tests
+# -------------------------------------------------------------------
+async def test_seeded_data_does_not_leak_across_tests(
+    db_session: AsyncSession,
+) -> None:
+    """Runs after the seeding tests; per-test rollback must leave no rows."""
+    existing = (await db_session.execute(select(Article.id))).scalars().all()
+    assert existing == []
