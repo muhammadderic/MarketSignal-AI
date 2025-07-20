@@ -29,4 +29,14 @@ describe('useCalendarParams', () => {
     expect(result.current.month).toBe(10);
     expect(result.current.date).toBeNull();
   });
+
+  it('normalizes out-of-range month to current UTC month', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-15T12:00:00Z'));
+
+    const { result } = renderCalendarParams(['/?year=2026&month=13']);
+
+    expect(result.current.year).toBe(2026);
+    expect(result.current.month).toBe(10);
+  });
 });
