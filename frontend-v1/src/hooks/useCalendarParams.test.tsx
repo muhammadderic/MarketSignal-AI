@@ -55,4 +55,10 @@ describe('useCalendarParams', () => {
 
     expect(result.current.date).toBe('2026-10-21');
   });
+
+  it('drops malformed date values', () => {
+    const { result } = renderCalendarParams(['/?year=2026&month=10&date=not-a-date']);
+
+    expect(result.current.date).toBeNull();
+  });
 });
