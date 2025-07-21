@@ -49,4 +49,10 @@ describe('useCalendarParams', () => {
     expect(result.current.year).toBe(2026);
     expect(result.current.month).toBe(5);
   });
+
+  it('exposes a valid ISO date from the query string', () => {
+    const { result } = renderCalendarParams(['/?year=2026&month=10&date=2026-10-21']);
+
+    expect(result.current.date).toBe('2026-10-21');
+  });
 });
