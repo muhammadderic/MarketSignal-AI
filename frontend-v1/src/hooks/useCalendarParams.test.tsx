@@ -39,4 +39,14 @@ describe('useCalendarParams', () => {
     expect(result.current.year).toBe(2026);
     expect(result.current.month).toBe(10);
   });
+
+  it('rejects years below 2001 and falls back to current UTC year', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-15T12:00:00Z'));
+
+    const { result } = renderCalendarParams(['/?year=1999&month=5']);
+
+    expect(result.current.year).toBe(2026);
+    expect(result.current.month).toBe(5);
+  });
 });
