@@ -79,4 +79,16 @@ describe('useCalendarParams', () => {
     expect(result.current.year).toBe(2027);
     expect(result.current.month).toBe(1);
   });
+
+  it('setMonth clears any previously selected date', () => {
+    const { result } = renderCalendarParams([
+      '/?year=2026&month=10&date=2026-10-21',
+    ]);
+
+    act(() => result.current.setMonth(2026, 11));
+
+    expect(result.current.year).toBe(2026);
+    expect(result.current.month).toBe(11);
+    expect(result.current.date).toBeNull();
+  });
 });
