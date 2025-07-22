@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 
 import { useCalendarParams } from '@/hooks/useCalendarParams';
@@ -60,5 +60,14 @@ describe('useCalendarParams', () => {
     const { result } = renderCalendarParams(['/?year=2026&month=10&date=not-a-date']);
 
     expect(result.current.date).toBeNull();
+  });
+
+  it('prevMonth wraps across year boundary', () => {
+    const { result } = renderCalendarParams(['/?year=2026&month=01']);
+
+    act(() => result.current.prevMonth());
+
+    expect(result.current.year).toBe(2025);
+    expect(result.current.month).toBe(12);
   });
 });
