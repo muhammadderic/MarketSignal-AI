@@ -70,4 +70,13 @@ describe('useCalendarParams', () => {
     expect(result.current.year).toBe(2025);
     expect(result.current.month).toBe(12);
   });
+
+  it('nextMonth wraps across year boundary', () => {
+    const { result } = renderCalendarParams(['/?year=2026&month=12']);
+
+    act(() => result.current.nextMonth());
+
+    expect(result.current.year).toBe(2027);
+    expect(result.current.month).toBe(1);
+  });
 });
