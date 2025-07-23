@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { ApiError } from '@/types/api';
+
 // vi.hoisted lets us define mocks that vi.mock factories reference.
 // Without it, factories run before top-level consts are initialized.
 const { invalidateQueriesMock, fetchArchiveCountsMock } = vi.hoisted(() => ({
@@ -59,5 +61,19 @@ describe('useArchiveCounts', () => {
     expect(result.current.countsByDate.get('2026-10-21')).toBe(15);
     expect(result.current.countsByDate.get('2026-10-02')).toBeUndefined();
     expect(result.current.isError).toBe(false);
+  });
+
+  it('exposes error state without crashing when the request fails', async () => {
+    fetchArchiveCountsMock.mockRejectedValueOnce(new ApiError(500, 'boom'));
+
+    const { result } = renderHook(() => useArchiveCounts(2026, 10), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(result.current.items).toEqual([]);
+    expect(result.current.countsByDate.size).toBe(0);
+    expect(result.current.error).toBeInstanceOf(ApiError);
   });
 });
