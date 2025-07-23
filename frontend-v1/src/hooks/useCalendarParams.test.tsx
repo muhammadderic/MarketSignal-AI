@@ -91,4 +91,14 @@ describe('useCalendarParams', () => {
     expect(result.current.month).toBe(11);
     expect(result.current.date).toBeNull();
   });
+
+  it('setDate updates the URL date and preserves year/month', () => {
+    const { result } = renderCalendarParams(['/?year=2026&month=10']);
+
+    act(() => result.current.setDate('2026-10-21'));
+
+    expect(result.current.date).toBe('2026-10-21');
+    expect(result.current.year).toBe(2026);
+    expect(result.current.month).toBe(10);
+  });
 });
