@@ -21,6 +21,7 @@ vi.mock('@/api/archive', () => ({
 }));
 
 import {
+  archiveCountsQueryKey,
   useArchiveCounts,
 } from '@/hooks/useArchiveCounts';
 
@@ -75,5 +76,9 @@ describe('useArchiveCounts', () => {
     expect(result.current.items).toEqual([]);
     expect(result.current.countsByDate.size).toBe(0);
     expect(result.current.error).toBeInstanceOf(ApiError);
+  });
+
+  it('exposes the query key in [archive-counts, year, month] shape', () => {
+    expect(archiveCountsQueryKey(2026, 10)).toEqual(['archive-counts', 2026, 10]);
   });
 });
