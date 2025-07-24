@@ -1,0 +1,44 @@
+import { describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import { MonthNavigator } from '@/components/calendar/MonthNavigator';
+
+describe('MonthNavigator', () => {
+  it('renders the current month name and year', () => {
+    render(
+      <MonthNavigator
+        year={2026}
+        month={10}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onYearChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('calendar-month-label')).toHaveTextContent('October');
+    expect(screen.getByLabelText('Year')).toHaveValue('2026');
+  });
+
+  it('invokes onPrev / onNext on button click', async () => {
+    const user = userEvent.setup();
+    const onPrev = vi.fn();
+    const onNext = vi.fn();
+
+    render(
+      <MonthNavigator
+        year={2026}
+        month={10}
+        onPrev={onPrev}
+        onNext={onNext}
+        onYearChange={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /previous month/i }));
+    await user.click(screen.getByRole('button', { name: /next month/i }));
+
+    expect(onPrev).toHaveBeenCalledTimes(1);
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+});
