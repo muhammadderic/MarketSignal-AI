@@ -22,6 +22,7 @@ vi.mock('@/api/archive', () => ({
 
 import {
   archiveCountsQueryKey,
+  invalidateArchiveCounts,
   useArchiveCounts,
 } from '@/hooks/useArchiveCounts';
 
@@ -80,5 +81,14 @@ describe('useArchiveCounts', () => {
 
   it('exposes the query key in [archive-counts, year, month] shape', () => {
     expect(archiveCountsQueryKey(2026, 10)).toEqual(['archive-counts', 2026, 10]);
+  });
+
+  it('invalidateArchiveCounts invalidates the entire prefix (AC-007)', async () => {
+    invalidateQueriesMock.mockResolvedValueOnce(undefined);
+
+    await invalidateArchiveCounts();
+
+    expect(invalidateQueriesMock).toHaveBeenCalledTimes(1);
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ['archive-counts'] });
   });
 });
