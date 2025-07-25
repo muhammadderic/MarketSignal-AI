@@ -41,4 +41,26 @@ describe('MonthNavigator', () => {
     expect(onPrev).toHaveBeenCalledTimes(1);
     expect(onNext).toHaveBeenCalledTimes(1);
   });
+
+  it('renders a year range of current ±5 and calls onYearChange with a number', async () => {
+    const user = userEvent.setup();
+    const onYearChange = vi.fn();
+
+    render(
+      <MonthNavigator
+        year={2026}
+        month={10}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onYearChange={onYearChange}
+      />,
+    );
+
+    const select = screen.getByLabelText('Year') as HTMLSelectElement;
+    const optionValues = Array.from(select.options).map((o) => Number(o.value));
+    expect(optionValues).toEqual([2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031]);
+
+    await user.selectOptions(select, '2024');
+    expect(onYearChange).toHaveBeenCalledWith(2024);
+  });
 });
