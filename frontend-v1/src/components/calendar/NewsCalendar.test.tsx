@@ -37,4 +37,29 @@ describe('NewsCalendar', () => {
       allCells.slice(0, 4).every((c) => c.getAttribute('data-date') === null),
     ).toBe(true);
   });
+
+    it('renders zero-count days as non-interactive gridcells', () => {
+    render(
+      <NewsCalendar
+        year={2026}
+        month={10}
+        countsByDate={makeMap([['2026-10-01', 12]])}
+        selectedDate={null}
+        isLoading={false}
+        isError={false}
+        onSelectDate={vi.fn()}
+      />,
+    );
+
+    const day01 = document.querySelector('[data-date="2026-10-01"]');
+    expect(day01).not.toBeNull();
+    // Day 01 has articles → rendered as an interactive button.
+    expect(day01!.tagName).toBe('BUTTON');
+
+    const day02 = document.querySelector('[data-date="2026-10-02"]');
+    expect(day02).not.toBeNull();
+    // Day 02 has zero articles → rendered as a disabled div, not clickable.
+    expect(day02!.tagName).toBe('DIV');
+    expect(day02!.getAttribute('aria-disabled')).toBe('true');
+  });
 });
