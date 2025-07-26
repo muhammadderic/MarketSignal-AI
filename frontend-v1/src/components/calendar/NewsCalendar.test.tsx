@@ -85,4 +85,21 @@ describe('NewsCalendar', () => {
     expect(onSelectDate).toHaveBeenCalledTimes(1);
     expect(onSelectDate).toHaveBeenCalledWith('2026-10-21');
   });
+
+  it('marks the selected day with aria-pressed=true', () => {
+    render(
+      <NewsCalendar
+        year={2026}
+        month={10}
+        countsByDate={makeMap([['2026-10-21', 15]])}
+        selectedDate="2026-10-21"
+        isLoading={false}
+        isError={false}
+        onSelectDate={vi.fn()}
+      />,
+    );
+
+    const day21 = screen.getByRole('gridcell', { name: /2026-10-21/i });
+    expect(day21).toHaveAttribute('aria-pressed', 'true');
+  });
 });
