@@ -102,4 +102,25 @@ describe('NewsCalendar', () => {
     const day21 = screen.getByRole('gridcell', { name: /2026-10-21/i });
     expect(day21).toHaveAttribute('aria-pressed', 'true');
   });
+
+  it('does not call onSelectDate when a zero-count day is clicked (non-interactive)', async () => {
+    const user = userEvent.setup();
+    const onSelectDate = vi.fn();
+
+    render(
+      <NewsCalendar
+        year={2026}
+        month={10}
+        countsByDate={makeMap([['2026-10-21', 15]])}
+        selectedDate={null}
+        isLoading={false}
+        isError={false}
+        onSelectDate={onSelectDate}
+      />,
+    );
+
+    const day02 = document.querySelector('[data-date="2026-10-02"]') as HTMLElement;
+    await user.click(day02);
+    expect(onSelectDate).not.toHaveBeenCalled();
+  });
 });
