@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { NewsCalendar } from '@/components/calendar/NewsCalendar';
 
@@ -61,5 +62,27 @@ describe('NewsCalendar', () => {
     // Day 02 has zero articles → rendered as a disabled div, not clickable.
     expect(day02!.tagName).toBe('DIV');
     expect(day02!.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('calls onSelectDate with the ISO date when an active day is clicked', async () => {
+    const user = userEvent.setup();
+    const onSelectDate = vi.fn();
+
+    render(
+      <NewsCalendar
+        year={2026}
+        month={10}
+        countsByDate={makeMap([['2026-10-21', 15]])}
+        selectedDate={null}
+        isLoading={false}
+        isError={false}
+        onSelectDate={onSelectDate}
+      />,
+    );
+
+    await user.click(screen.getByRole('gridcell', { name: /2026-10-21, 15 article/i }));
+
+    expect(onSelectDate).toHaveBeenCalledTimes(1);
+    expect(onSelectDate).toHaveBeenCalledWith('2026-10-21');
   });
 });
