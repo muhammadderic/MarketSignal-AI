@@ -139,4 +139,20 @@ describe('NewsCalendar', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent(/loading counts/i);
   });
+
+  it('renders an error alert when isError is true', () => {
+    render(
+      <NewsCalendar
+        year={2026}
+        month={10}
+        countsByDate={makeMap([])}
+        selectedDate={null}
+        isLoading={false}
+        isError={true}
+        onSelectDate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/failed to load calendar counts/i);
+  });
 });
