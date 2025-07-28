@@ -11,6 +11,7 @@ from datetime import UTC, date, datetime
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.orm import defer
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -137,6 +138,61 @@ class ArticleRepository:
         )
         result = await db.execute(stmt)
         return [(row[0], int(row[1])) for row in result.all()]
+
+    async def list_articles(
+        self,
+        db: AsyncSession,
+        *,
+        published_date: date | None = None,
+        workflow_state: WorkflowState | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[Article], int]:
+        """Return a page of article metadata plus the total matching count.
+
+        Applies optional filters on the indexed ``published_at_date`` and
+        ``workflow_state`` columns, orders by ``published_at`` descending, and
+        defers the heavy text columns (``scraped_content``,
+        ``financial_insight``) so the list payload stays small
+        (``API_CONTRACTS.md`` §Business Rules).
+
+        Args:
+            db: Active async session.
+            published_date: Optional UTC publication date filter.
+            workflow_state: Optional lifecycle state filter.
+            limit: Page size (already validated by the endpoint, 1–200).
+            offset: Pagination offset (already validated, ``>= 0``).
+
+        Returns:
+            ``(items, total)`` where ``total`` is the unpaginated match count.
+        """
+        conditions = []
+        if published_date is not None:
+            conditions.append(Article.published_at_date == published_date)
+        if workflow_state is not None:
+            conditions.append(Article.workflow_state == workflow_state.value)
+
+        count_stmt = select(func.count(Article.id))
+        if conditions:
+            count_stmt = count_stmt.where(*conditions)
+        total = int((await db.execute(count_stmt)).scalar_one())
+
+        stmt = (
+            select(Article)
+            .options(
+                defer(Article.scraped_content),
+                defer(Article.financial_insight),
+            )
+            .order_by(Article.published_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        if conditions:
+            stmt = stmt.where(*conditions)
+
+        result = await db.execute(stmt)
+        items = list(result.scalars().all())
+        return items, total
 
 
 def _utcnow_factory() -> datetime:  # pragma: no cover - helper for tests
