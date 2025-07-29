@@ -160,3 +160,18 @@ async def test_list_returns_200_and_paginated_envelope(
     assert body["offset"] == 0
     assert isinstance(body["items"], list)
     assert len(body["items"]) == 6
+
+
+async def test_list_items_exclude_heavy_text_columns(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """``scraped_content`` and ``financial_insight`` MUST be absent from items."""
+    response = await async_client.get(ENDPOINT, params={"date": "2026-10-21"})
+
+    assert response.status_code == 200, response.text
+    items = response.json()["items"]
+    assert items, "expected seeded Oct 21 articles"
+    for item in items:
+        assert "scraped_content" not in item
+        assert "financial_insight" not in item
