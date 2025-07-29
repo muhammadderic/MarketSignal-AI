@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.error_handlers import BadRequestError
 from app.db.repositories.article_repository import ArticleRepository
 from app.db.database import get_async_db
-from app.schemas.archive_schema import ArchiveCountItem
+from app.schemas.archive import ArchiveCountItem
 
 logger = logging.getLogger(__name__)
 

@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_async_db
 from app.db.models import WorkflowState
 from app.db.repositories.article_repository import ArticleRepository
-from app.schemas.article_schema import ArticleListResponse, ArticleSummaryResponse
+from app.schemas.article import ArticleListResponse, ArticleSummaryResponse
 
 logger = logging.getLogger(__name__)
 
