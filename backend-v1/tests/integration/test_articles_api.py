@@ -202,3 +202,21 @@ async def test_list_item_contains_documented_fields(
         "updated_at",
     }
     assert expected_fields.issubset(item.keys())
+
+
+async def test_list_relevance_fields_serialize_when_present(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """Scored articles expose ``relevance_score`` / ``relevance_reasoning``."""
+    response = await async_client.get(ENDPOINT, params={"date": "2026-10-21"})
+    items = response.json()["items"]
+
+    by_title = {item["title"]: item for item in items}
+    scored = by_title["Oct21 15h Scored"]
+    assert scored["relevance_score"] == 4
+    assert scored["relevance_reasoning"] == "Direct macro impact."
+
+    unscored = by_title["Oct21 09h Ingested"]
+    assert unscored["relevance_score"] is None
+    assert unscored["relevance_reasoning"] is None
