@@ -220,3 +220,18 @@ async def test_list_relevance_fields_serialize_when_present(
     unscored = by_title["Oct21 09h Ingested"]
     assert unscored["relevance_score"] is None
     assert unscored["relevance_reasoning"] is None
+
+
+# ----------------------------------------------
+# AC-002 — Order by ``published_at`` descending
+# ----------------------------------------------
+async def test_list_orders_by_published_at_descending(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """Items are returned most-recent-first (API_CONTRACTS.md business rule)."""
+    response = await async_client.get(ENDPOINT, params={"date": "2026-10-21"})
+
+    assert response.status_code == 200, response.text
+    published = [item["published_at"] for item in response.json()["items"]]
+    assert published == sorted(published, reverse=True)
