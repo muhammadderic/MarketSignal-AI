@@ -175,3 +175,30 @@ async def test_list_items_exclude_heavy_text_columns(
     for item in items:
         assert "scraped_content" not in item
         assert "financial_insight" not in item
+
+
+async def test_list_item_contains_documented_fields(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """Each item exposes the metadata fields enumerated in API_CONTRACTS.md."""
+    response = await async_client.get(ENDPOINT, params={"date": "2026-10-21"})
+
+    assert response.status_code == 200, response.text
+    item = response.json()["items"][0]
+    expected_fields = {
+        "id",
+        "title",
+        "source_name",
+        "published_at",
+        "published_at_date",
+        "google_url",
+        "resolved_url",
+        "relevance_score",
+        "relevance_reasoning",
+        "scraping_status",
+        "workflow_state",
+        "created_at",
+        "updated_at",
+    }
+    assert expected_fields.issubset(item.keys())
