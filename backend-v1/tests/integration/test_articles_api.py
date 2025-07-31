@@ -265,3 +265,18 @@ async def test_list_filters_by_date(
     assert body["total"] == 4
     for item in body["items"]:
         assert item["published_at_date"] == "2026-10-21"
+
+
+async def test_list_returns_empty_envelope_for_date_without_articles(
+    async_client: AsyncClient,
+) -> None:
+    """A date with no rows yields 200 with ``total=0`` and empty items."""
+    response = await async_client.get(ENDPOINT, params={"date": "2020-01-01"})
+
+    assert response.status_code == 200, response.text
+    assert response.json() == {
+        "total": 0,
+        "limit": 50,
+        "offset": 0,
+        "items": [],
+    }
