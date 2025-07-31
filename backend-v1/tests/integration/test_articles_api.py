@@ -248,3 +248,20 @@ async def test_list_orders_by_published_at_descending_across_dates(
     assert [i["published_at"] for i in items] == sorted(
         (i["published_at"] for i in items), reverse=True
     )
+
+
+# -----------------------------
+# Filtering — ``date`` (AC-001)
+# -----------------------------
+async def test_list_filters_by_date(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """``date=2026-10-21`` returns only rows whose ``published_at_date`` matches."""
+    response = await async_client.get(ENDPOINT, params={"date": "2026-10-21"})
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["total"] == 4
+    for item in body["items"]:
+        assert item["published_at_date"] == "2026-10-21"
