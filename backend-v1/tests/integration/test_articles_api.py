@@ -235,3 +235,16 @@ async def test_list_orders_by_published_at_descending(
     assert response.status_code == 200, response.text
     published = [item["published_at"] for item in response.json()["items"]]
     assert published == sorted(published, reverse=True)
+
+
+async def test_list_orders_by_published_at_descending_across_dates(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """Full-list ordering invariant (no date filter) is also descending."""
+    response = await async_client.get(ENDPOINT)
+    items = response.json()["items"]
+
+    assert [i["published_at"] for i in items] == sorted(
+        (i["published_at"] for i in items), reverse=True
+    )
