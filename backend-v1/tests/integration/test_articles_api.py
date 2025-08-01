@@ -280,3 +280,21 @@ async def test_list_returns_empty_envelope_for_date_without_articles(
         "offset": 0,
         "items": [],
     }
+
+
+# --------------------------------------------
+# Filtering — ``workflow_state`` (AC-001 / R-002)
+# --------------------------------------------
+async def test_list_filters_by_workflow_state(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """``workflow_state=URL Resolved`` isolates only matching rows."""
+    response = await async_client.get(
+        ENDPOINT, params={"workflow_state": "URL Resolved"}
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["total"] == 1
+    assert body["items"][0]["title"] == "Oct19 12h URLResolved"
