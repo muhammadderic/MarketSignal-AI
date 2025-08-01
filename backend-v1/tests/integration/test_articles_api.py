@@ -298,3 +298,20 @@ async def test_list_filters_by_workflow_state(
     body = response.json()
     assert body["total"] == 1
     assert body["items"][0]["title"] == "Oct19 12h URLResolved"
+
+
+async def test_list_combines_date_and_state_filters(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """Both filters AND together."""
+    response = await async_client.get(
+        ENDPOINT,
+        params={"date": "2026-10-21", "workflow_state": "Ingested"},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["total"] == 2
+    titles = {i["title"] for i in body["items"]}
+    assert titles == {"Oct21 09h Ingested", "Oct21 06h Ingested"}
