@@ -315,3 +315,38 @@ async def test_list_combines_date_and_state_filters(
     assert body["total"] == 2
     titles = {i["title"] for i in body["items"]}
     assert titles == {"Oct21 09h Ingested", "Oct21 06h Ingested"}
+
+
+# --------------------------------------
+# Pagination — ``limit`` / ``offset`` (AC-007)
+# --------------------------------------
+async def test_list_pagination_limit_and_offset(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """``limit=2&offset=0`` and ``offset=2`` produce disjoint, ordered slices."""
+    page1 = await async_client.get(ENDPOINT, params={"limit": 2, "offset": 0})
+    page2 = await async_client.get(ENDPOINT, params={"limit": 2, "offset": 2})
+
+    assert page1.status_code == 200, page1.text
+    assert page2.status_code == 200, page2.text
+
+    body1 = page1.json()
+    body2 = page2.json()
+
+    assert body1["total"] == 6
+    assert body2["total"] == 6
+    assert body1["limit"] == body2["limit"] == 2
+    assert body1["offset"] == 0
+    assert body2["offset"] == 2
+
+    ids1 = [item["id"] for item in body1["items"]]
+    ids2 = [item["id"] for item in body2["items"]]
+    assert len(ids1) == len(ids2) == 2
+    assert set(ids1).isdisjoint(ids2)
+
+    # Concatenation must preserve descending published_at order.
+    combined_times = [
+        item["published_at"] for item in body1["items"] + body2["items"]
+    ]
+    assert combined_times == sorted(combined_times, reverse=True)
