@@ -364,3 +364,26 @@ async def test_list_pagination_offset_past_end_returns_empty_items(
     assert body["total"] == 6
     assert body["offset"] == 100
     assert body["items"] == []
+
+
+async def test_list_pagination_covers_all_items_once(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """Iterating pages of size 4 returns every ID exactly once."""
+    collected: list[int] = []
+    offset = 0
+    limit = 4
+    while True:
+        response = await async_client.get(
+            ENDPOINT, params={"limit": limit, "offset": offset}
+        )
+        assert response.status_code == 200, response.text
+        body = response.json()
+        collected.extend(item["id"] for item in body["items"])
+        offset += limit
+        if offset >= body["total"]:
+            break
+
+    assert len(collected) == 6
+    assert len(set(collected)) == 6
