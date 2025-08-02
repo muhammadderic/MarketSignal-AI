@@ -387,3 +387,27 @@ async def test_list_pagination_covers_all_items_once(
 
     assert len(collected) == 6
     assert len(set(collected)) == 6
+
+
+# ---------------------------------
+# Validation — limit / offset (422)
+# ---------------------------------
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"limit": 0},        # below ge=1
+        {"limit": -1},       # below ge=1
+        {"limit": 201},      # above le=200
+        {"limit": "abc"},    # non-integer
+        {"offset": -1},      # below ge=0
+        {"offset": "x"},     # non-integer
+    ],
+)
+async def test_list_invalid_limit_or_offset_returns_422(
+    async_client: AsyncClient,
+    params: dict[str, object],
+) -> None:
+    """Out-of-range or non-integer pagination params are rejected (422)."""
+    response = await async_client.get(ENDPOINT, params=params)
+
+    assert response.status_code == 422, response.text
