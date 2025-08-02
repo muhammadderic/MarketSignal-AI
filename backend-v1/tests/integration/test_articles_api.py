@@ -350,3 +350,17 @@ async def test_list_pagination_limit_and_offset(
         item["published_at"] for item in body1["items"] + body2["items"]
     ]
     assert combined_times == sorted(combined_times, reverse=True)
+
+
+async def test_list_pagination_offset_past_end_returns_empty_items(
+    async_client: AsyncClient,
+    seeded_mixed: AsyncSession,
+) -> None:
+    """Offset beyond ``total`` yields an empty slice with correct ``total``."""
+    response = await async_client.get(ENDPOINT, params={"limit": 50, "offset": 100})
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["total"] == 6
+    assert body["offset"] == 100
+    assert body["items"] == []
