@@ -411,3 +411,20 @@ async def test_list_invalid_limit_or_offset_returns_422(
     response = await async_client.get(ENDPOINT, params=params)
 
     assert response.status_code == 422, response.text
+
+
+# ----------------------------------------------
+# Validation — malformed ``date`` / bad state (422)
+# ----------------------------------------------
+@pytest.mark.parametrize(
+    "bad_date",
+    ["2026-13-01", "not-a-date", "2026/10/21", "2026-10-32"],
+)
+async def test_list_invalid_date_format_returns_422(
+    async_client: AsyncClient,
+    bad_date: str,
+) -> None:
+    """Malformed ``date`` strings are rejected by Pydantic-native validation."""
+    response = await async_client.get(ENDPOINT, params={"date": bad_date})
+
+    assert response.status_code == 422, response.text
