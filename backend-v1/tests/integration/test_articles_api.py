@@ -428,3 +428,20 @@ async def test_list_invalid_date_format_returns_422(
     response = await async_client.get(ENDPOINT, params={"date": bad_date})
 
     assert response.status_code == 422, response.text
+
+
+async def test_list_unknown_workflow_state_returns_422(
+    async_client: AsyncClient,
+) -> None:
+    """Unknown ``workflow_state`` values fail enum validation at 422.
+
+    Note: API_CONTRACTS.md nominally lists 400 for unknown state; the current
+    router validates via ``WorkflowState`` enum, which FastAPI surfaces as 422.
+    This test encodes the observable behavior so any future change to 400 is
+    caught explicitly.
+    """
+    response = await async_client.get(
+        ENDPOINT, params={"workflow_state": "Bogus State"}
+    )
+
+    assert response.status_code == 422, response.text
