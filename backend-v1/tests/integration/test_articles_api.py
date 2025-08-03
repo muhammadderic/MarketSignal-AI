@@ -445,3 +445,18 @@ async def test_list_unknown_workflow_state_returns_422(
     )
 
     assert response.status_code == 422, response.text
+
+
+# -----------------------------------------------------
+# Isolation sanity: seeded rows roll back per test
+# -----------------------------------------------------
+async def test_seeded_data_does_not_leak_across_tests(
+    async_client: AsyncClient,
+) -> None:
+    """Runs without ``seeded_mixed``; per-test rollback leaves the table empty."""
+    response = await async_client.get(ENDPOINT)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["total"] == 0
+    assert body["items"] == []
