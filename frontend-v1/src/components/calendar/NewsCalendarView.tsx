@@ -3,6 +3,7 @@ import { useCalendarParams } from '@/hooks/useCalendarParams';
 import { useUIStore } from '@/stores/useUIStore';
 import { MonthNavigator } from '@/components/calendar/MonthNavigator';
 import { NewsCalendar } from '@/components/calendar/NewsCalendar';
+import { ArticleList } from '@/components/articles/ArticleList';
 
 export function NewsCalendarView() {
   const { year, month, date, setMonth, setDate, prevMonth, nextMonth } = useCalendarParams();
@@ -20,28 +21,35 @@ export function NewsCalendarView() {
   };
 
   return (
-    <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
-      <MonthNavigator
-        year={year}
-        month={month}
-        onPrev={prevMonth}
-        onNext={nextMonth}
-        onYearChange={handleYearChange}
-      />
-      <NewsCalendar
-        year={year}
-        month={month}
-        countsByDate={countsByDate}
-        selectedDate={date}
-        isLoading={isLoading}
-        isError={isError}
-        onSelectDate={handleSelectDate}
-      />
+    <>
+      <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+        <MonthNavigator
+          year={year}
+          month={month}
+          onPrev={prevMonth}
+          onNext={nextMonth}
+          onYearChange={handleYearChange}
+        />
+        <NewsCalendar
+          year={year}
+          month={month}
+          countsByDate={countsByDate}
+          selectedDate={date}
+          isLoading={isLoading}
+          isError={isError}
+          onSelectDate={handleSelectDate}
+        />
+        {date ? (
+          <p className="text-sm text-slate-600" data-testid="selected-date">
+            Selected date: <span className="font-medium">{date}</span>
+          </p>
+        ) : null}
+      </section>
       {date ? (
-        <p className="text-sm text-slate-600" data-testid="selected-date">
-          Selected date: <span className="font-medium">{date}</span>
-        </p>
+        <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+          <ArticleList />
+        </section>
       ) : null}
-    </section>
+    </>
   );
 }
