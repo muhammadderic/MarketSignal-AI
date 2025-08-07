@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import type { Article, ArticleListResponse } from '@/types/article';
 
 const { fetchArticlesMock } = vi.hoisted(() => ({
   fetchArticlesMock: vi.fn(),
@@ -20,6 +21,37 @@ function createWrapper() {
   });
   return function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
+}
+
+function makeArticle(overrides: Partial<Article> = {}): Article {
+  return {
+    id: 101,
+    title: 'Central Bank Signals Rate Adjustments',
+    source_name: 'Financial News',
+    published_at: '2026-10-21T08:30:00Z',
+    published_at_date: '2026-10-21',
+    google_url: 'https://news.google.com/articles/101',
+    resolved_url: 'https://example.com/article/101',
+    relevance_score: 4,
+    relevance_reasoning: 'Direct macroeconomic impact.',
+    scraping_status: 'SUCCESS',
+    workflow_state: 'Scraped',
+    created_at: '2026-10-21T09:00:00Z',
+    updated_at: '2026-10-21T09:15:00Z',
+    ...overrides,
+  };
+}
+
+function makeResponse(
+  overrides: Partial<ArticleListResponse> = {},
+): ArticleListResponse {
+  return {
+    total: 1,
+    limit: 50,
+    offset: 0,
+    items: [makeArticle()],
+    ...overrides,
   };
 }
 
@@ -41,5 +73,26 @@ describe('useArticles', () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.fetchStatus).toBe('idle');
     expect(fetchArticlesMock).not.toHaveBeenCalled();
+  });
+
+  it('fetches with the provided date, limit, offset, and no workflowState', async () => {
+    fetchArticlesMock.mockResolvedValueOnce(makeResponse());
+
+    const { result } = renderHook(
+      () => useArticles({ dateISO: '2026-10-21' }, { limit: 50, offset: 0 }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(fetchArticlesMock).toHaveBeenCalledTimes(1);
+    expect(fetchArticlesMock).toHaveBeenCalledWith({
+      dateISO: '2026-10-21',
+      workflowState: null,
+      limit: 50,
+      offset: 0,
+    });
+    expect(result.current.data?.items[0].id).toBe(101);
+    expect(result.current.data?.total).toBe(1);
   });
 });
