@@ -95,4 +95,26 @@ describe('useArticles', () => {
     expect(result.current.data?.items[0].id).toBe(101);
     expect(result.current.data?.total).toBe(1);
   });
+
+  it('passes workflowState through when provided', async () => {
+    fetchArticlesMock.mockResolvedValueOnce(makeResponse({ items: [] }));
+
+    renderHook(
+      () =>
+        useArticles(
+          { dateISO: '2026-10-21', workflowState: 'Scraped' },
+          { limit: 10, offset: 20 },
+        ),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(fetchArticlesMock).toHaveBeenCalled());
+
+    expect(fetchArticlesMock).toHaveBeenCalledWith({
+      dateISO: '2026-10-21',
+      workflowState: 'Scraped',
+      limit: 10,
+      offset: 20,
+    });
+  });
 });
