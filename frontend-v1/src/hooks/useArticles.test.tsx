@@ -149,4 +149,56 @@ describe('useArticles', () => {
     expect(result.current.error).toBeInstanceOf(ApiError);
     expect(result.current.data).toBeUndefined();
   });
+
+    it('retains previous data while fetching the next page (keepPreviousData)', async () => {
+    const firstPage = makeResponse({
+      total: 120,
+      limit: 50,
+      offset: 0,
+      items: [makeArticle({ id: 1 })],
+    });
+    const secondPage = makeResponse({
+      total: 120,
+      limit: 50,
+      offset: 50,
+      items: [makeArticle({ id: 2 })],
+    });
+
+    let resolveSecond: (value: ArticleListResponse) => void = () => undefined;
+
+    fetchArticlesMock
+      .mockResolvedValueOnce(firstPage)
+      .mockImplementationOnce(
+        () =>
+          new Promise<ArticleListResponse>((resolve) => {
+            resolveSecond = resolve;
+          }),
+      );
+
+    const { result, rerender } = renderHook(
+      ({ offset }: { offset: number }) =>
+        useArticles({ dateISO: '2026-10-21' }, { limit: 50, offset }),
+      {
+        wrapper: createWrapper(),
+        initialProps: { offset: 0 },
+      },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.items[0].id).toBe(1);
+    expect(result.current.data?.offset).toBe(0);
+
+    rerender({ offset: 50 });
+
+    // While page 2 is in flight, placeholderData keeps page 1 visible.
+    await waitFor(() => expect(result.current.isFetching).toBe(true));
+    expect(result.current.data?.offset).toBe(0);
+    expect(result.current.data?.items[0].id).toBe(1);
+
+    // Resolve page 2 and wait for the new data to land.
+    resolveSecond(secondPage);
+    await waitFor(() => expect(result.current.isFetching).toBe(false));
+    expect(result.current.data?.offset).toBe(50);
+    expect(result.current.data?.items[0].id).toBe(2);
+  });
 });
