@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { ApiError } from '@/types/api';
 import type { Article, ArticleListResponse } from '@/types/article';
 
 const { fetchArticlesMock } = vi.hoisted(() => ({
@@ -133,5 +134,19 @@ describe('useArticles', () => {
     const client = new QueryClient();
     void client; // silence unused — we assert via the exported hook only.
     // The queryKey is asserted indirectly by the fetch call shape above.
+  });
+
+  it('exposes error state when the service rejects', async () => {
+    fetchArticlesMock.mockRejectedValueOnce(new ApiError(500, 'boom'));
+
+    const { result } = renderHook(
+      () => useArticles({ dateISO: '2026-10-21' }, { limit: 50, offset: 0 }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(result.current.error).toBeInstanceOf(ApiError);
+    expect(result.current.data).toBeUndefined();
   });
 });
