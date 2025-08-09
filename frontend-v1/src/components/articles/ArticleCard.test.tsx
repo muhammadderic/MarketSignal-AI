@@ -59,4 +59,17 @@ describe('ArticleCard', () => {
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
+
+  it('falls back to google_url when resolved_url is null', () => {
+    render(
+      <ArticleCard
+        article={makeArticle({ resolved_url: null })}
+        isSelected={false}
+        onToggleSelection={vi.fn()}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: /open google news url/i });
+    expect(link).toHaveAttribute('href', 'https://news.google.com/articles/101');
+  });
 })
