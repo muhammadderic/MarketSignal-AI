@@ -72,4 +72,17 @@ describe('ArticleCard', () => {
     const link = screen.getByRole('link', { name: /open google news url/i });
     expect(link).toHaveAttribute('href', 'https://news.google.com/articles/101');
   });
+
+  it('shows Unscored and omits reasoning when no score is present', () => {
+    render(
+      <ArticleCard
+        article={makeArticle({ relevance_score: null, relevance_reasoning: null })}
+        isSelected={false}
+        onToggleSelection={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Unscored')).toBeInTheDocument();
+    expect(screen.queryByText(/Direct macroeconomic impact/i)).not.toBeInTheDocument();
+  });
 })
