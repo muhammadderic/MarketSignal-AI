@@ -44,4 +44,19 @@ describe('ArticleCard', () => {
     expect(screen.getByText('Scrape: SUCCESS')).toBeInTheDocument();
     expect(screen.getByText('Direct macroeconomic impact.')).toBeInTheDocument();
   });
+
+  it('uses resolved_url for the external link when present', () => {
+    render(
+      <ArticleCard
+        article={makeArticle()}
+        isSelected={false}
+        onToggleSelection={vi.fn()}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: /open publisher url/i });
+    expect(link).toHaveAttribute('href', 'https://example.com/article/101');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
 })
