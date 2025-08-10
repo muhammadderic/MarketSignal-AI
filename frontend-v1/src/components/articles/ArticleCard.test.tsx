@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-// import userEvent from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 
 import { ArticleCard } from '@/components/articles/ArticleCard';
 import type { Article } from '@/types/article';
@@ -107,5 +107,23 @@ describe('ArticleCard', () => {
     );
 
     expect(checkbox).toBeChecked();
+  });
+
+  it('calls onToggleSelection with the article id on checkbox click (AC-004)', async () => {
+    const user = userEvent.setup();
+    const onToggleSelection = vi.fn();
+
+    render(
+      <ArticleCard
+        article={makeArticle()}
+        isSelected={false}
+        onToggleSelection={onToggleSelection}
+      />,
+    );
+
+    await user.click(screen.getByRole('checkbox', { name: /select article 101/i }));
+
+    expect(onToggleSelection).toHaveBeenCalledTimes(1);
+    expect(onToggleSelection).toHaveBeenCalledWith(101);
   });
 })
