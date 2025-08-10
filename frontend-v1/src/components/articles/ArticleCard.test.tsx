@@ -85,4 +85,27 @@ describe('ArticleCard', () => {
     expect(screen.getByText('Unscored')).toBeInTheDocument();
     expect(screen.queryByText(/Direct macroeconomic impact/i)).not.toBeInTheDocument();
   });
+
+  it('reflects isSelected on the checkbox', () => {
+    const { rerender } = render(
+      <ArticleCard
+        article={makeArticle()}
+        isSelected={false}
+        onToggleSelection={vi.fn()}
+      />,
+    );
+
+    const checkbox = screen.getByRole('checkbox', { name: /select article 101/i });
+    expect(checkbox).not.toBeChecked();
+
+    rerender(
+      <ArticleCard
+        article={makeArticle()}
+        isSelected={true}
+        onToggleSelection={vi.fn()}
+      />,
+    );
+
+    expect(checkbox).toBeChecked();
+  });
 })
