@@ -36,4 +36,17 @@ describe('BatchToolbar', () => {
 
     expect(screen.getByTestId('selected-count')).toHaveTextContent('1 selected');
   });
+
+  it('reflects fully-selected state on the Select All checkbox (AC-005)', () => {
+    render(
+      <BatchToolbar
+        visibleArticles={[makeArticle(1), makeArticle(2)]}
+        selectedIds={new Set([1, 2])}
+        onToggleAll={vi.fn()}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('checkbox', { name: /select all/i })).toBeChecked();
+  });
 })
