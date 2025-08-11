@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-// import userEvent from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 
 import { BatchToolbar } from '@/components/articles/BatchToolbar';
 import type { Article } from '@/types/article';
@@ -65,5 +65,24 @@ describe('BatchToolbar', () => {
     }) as HTMLInputElement;
     expect(checkbox.indeterminate).toBe(true);
     expect(checkbox).not.toBeChecked();
+  });
+
+  it('calls onToggleAll with visible ids when Select All is checked (AC-005)', async () => {
+    const user = userEvent.setup();
+    const onToggleAll = vi.fn();
+
+    render(
+      <BatchToolbar
+        visibleArticles={[makeArticle(1), makeArticle(2)]}
+        selectedIds={new Set()}
+        onToggleAll={onToggleAll}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+    expect(onToggleAll).toHaveBeenCalledTimes(1);
+    expect(onToggleAll).toHaveBeenCalledWith([1, 2]);
   });
 })
