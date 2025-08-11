@@ -49,4 +49,21 @@ describe('BatchToolbar', () => {
 
     expect(screen.getByRole('checkbox', { name: /select all/i })).toBeChecked();
   });
+
+  it('is indeterminate when only some visible articles are selected', () => {
+    render(
+      <BatchToolbar
+        visibleArticles={[makeArticle(1), makeArticle(2), makeArticle(3)]}
+        selectedIds={new Set([2])}
+        onToggleAll={vi.fn()}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: /select all/i,
+    }) as HTMLInputElement;
+    expect(checkbox.indeterminate).toBe(true);
+    expect(checkbox).not.toBeChecked();
+  });
 })
