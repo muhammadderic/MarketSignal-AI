@@ -85,4 +85,22 @@ describe('BatchToolbar', () => {
     expect(onToggleAll).toHaveBeenCalledTimes(1);
     expect(onToggleAll).toHaveBeenCalledWith([1, 2]);
   });
+
+  it('calls onClearSelection when Select All is unchecked while fully selected', async () => {
+    const user = userEvent.setup();
+    const onClearSelection = vi.fn();
+
+    render(
+      <BatchToolbar
+        visibleArticles={[makeArticle(1), makeArticle(2)]}
+        selectedIds={new Set([1, 2])}
+        onToggleAll={vi.fn()}
+        onClearSelection={onClearSelection}
+      />,
+    );
+
+    await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+    expect(onClearSelection).toHaveBeenCalledTimes(1);
+  });
 })
