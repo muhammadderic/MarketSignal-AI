@@ -118,4 +118,31 @@ describe('BatchToolbar', () => {
     expect(screen.getByRole('button', { name: /resolve urls/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /scrape articles/i })).toBeDisabled();
   });
+
+  it('invokes the action callbacks with the selected ids', async () => {
+    const user = userEvent.setup();
+    const onScoreRelevance = vi.fn();
+    const onResolveUrls = vi.fn();
+    const onScrapeArticles = vi.fn();
+
+    render(
+      <BatchToolbar
+        visibleArticles={[makeArticle(1), makeArticle(2), makeArticle(3)]}
+        selectedIds={new Set([1, 3])}
+        onToggleAll={vi.fn()}
+        onClearSelection={vi.fn()}
+        onScoreRelevance={onScoreRelevance}
+        onResolveUrls={onResolveUrls}
+        onScrapeArticles={onScrapeArticles}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /score relevance/i }));
+    await user.click(screen.getByRole('button', { name: /resolve urls/i }));
+    await user.click(screen.getByRole('button', { name: /scrape articles/i }));
+
+    expect(onScoreRelevance).toHaveBeenCalledWith([1, 3]);
+    expect(onResolveUrls).toHaveBeenCalledWith([1, 3]);
+    expect(onScrapeArticles).toHaveBeenCalledWith([1, 3]);
+  });
 })
