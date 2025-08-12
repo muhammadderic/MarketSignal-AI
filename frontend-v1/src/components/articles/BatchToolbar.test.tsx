@@ -103,4 +103,19 @@ describe('BatchToolbar', () => {
 
     expect(onClearSelection).toHaveBeenCalledTimes(1);
   });
+
+  it('disables action buttons when nothing is selected', () => {
+    render(
+      <BatchToolbar
+        visibleArticles={[makeArticle(1)]}
+        selectedIds={new Set()}
+        onToggleAll={vi.fn()}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /score relevance/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /resolve urls/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /scrape articles/i })).toBeDisabled();
+  });
 })
