@@ -145,4 +145,17 @@ describe('BatchToolbar', () => {
     expect(onResolveUrls).toHaveBeenCalledWith([1, 3]);
     expect(onScrapeArticles).toHaveBeenCalledWith([1, 3]);
   });
+
+  it('disables Select All when there are no visible articles', () => {
+    render(
+      <BatchToolbar
+        visibleArticles={[]}
+        selectedIds={new Set()}
+        onToggleAll={vi.fn()}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('checkbox', { name: /select all/i })).toBeDisabled();
+  });
 })
