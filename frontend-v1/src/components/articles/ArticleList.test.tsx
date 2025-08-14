@@ -113,4 +113,15 @@ describe('ArticleList', () => {
     resolveFetch(makeResponse());
     await waitFor(() => expect(screen.queryByRole('status', { name: /loading articles/i })).toBeNull());
   });
+
+  it('shows the empty state when no articles exist', async () => {
+    fetchArticlesMock.mockResolvedValueOnce(
+      makeResponse({ total: 0, items: [] }),
+    );
+
+    renderWithProviders(<ArticleList />, [DATE_URL]);
+
+    expect(await screen.findByText(/no articles for 2026-10-21/i)).toBeInTheDocument();
+    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 1 of 1');
+  });
 })
