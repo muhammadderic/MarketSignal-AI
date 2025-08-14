@@ -2,12 +2,12 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 // import { render, screen, waitFor, within } from '@testing-library/react';
-// import userEvent from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
 
 import type { Article, ArticleListResponse } from '@/types/article';
-// import { ApiError } from '@/types/api';
+import { ApiError } from '@/types/api';
 import { useUIStore } from '@/stores/useUIStore';
 
 const { fetchArticlesMock } = vi.hoisted(() => ({
@@ -123,5 +123,19 @@ describe('ArticleList', () => {
 
     expect(await screen.findByText(/no articles for 2026-10-21/i)).toBeInTheDocument();
     expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 1 of 1');
+  });
+
+  it('shows an error banner with Retry that refetches', async () => {
+    fetchArticlesMock.mockRejectedValueOnce(new ApiError(500, 'boom'));
+
+    renderWithProviders(<ArticleList />, [DATE_URL]);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/failed to load articles/i);
+
+    fetchArticlesMock.mockResolvedValueOnce(makeResponse());
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /retry/i }));
+
+    expect(await screen.findByText('Article 1')).toBeInTheDocument();
   });
 })
