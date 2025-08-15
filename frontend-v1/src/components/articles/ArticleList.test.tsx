@@ -151,4 +151,24 @@ describe('ArticleList', () => {
     expect(useUIStore.getState().selectedArticleIds.has(1)).toBe(true);
     expect(screen.getByTestId('selected-count')).toHaveTextContent('1 selected');
   });
+
+  it('Select All selects only the visible page items (AC-005)', async () => {
+    fetchArticlesMock.mockResolvedValueOnce(
+      makeResponse({
+        total: 3,
+        items: [makeArticle(1), makeArticle(2)],
+      }),
+    );
+
+    renderWithProviders(<ArticleList />, [DATE_URL]);
+    await screen.findByText('Article 1');
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+    const ids = useUIStore.getState().selectedArticleIds;
+    expect(ids.has(1)).toBe(true);
+    expect(ids.has(2)).toBe(true);
+    expect(ids.has(3)).toBe(false);
+  });
 })
