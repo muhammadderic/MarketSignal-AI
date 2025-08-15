@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-// import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
@@ -63,7 +62,7 @@ function renderWithProviders(ui: ReactNode, initialEntries: string[]) {
 }
 
 const DATE_URL = '/calendar?year=2026&month=10&date=2026-10-21';
-// const OTHER_DATE_URL = '/calendar?year=2026&month=10&date=2026-10-22';
+const OTHER_DATE_URL = '/calendar?year=2026&month=10&date=2026-10-22';
 
 describe('ArticleList', () => {
   beforeEach(() => {
@@ -170,5 +169,39 @@ describe('ArticleList', () => {
     expect(ids.has(1)).toBe(true);
     expect(ids.has(2)).toBe(true);
     expect(ids.has(3)).toBe(false);
+  });
+
+  it('clears selection and resets offset when the active date changes (AC-006)', async () => {
+    fetchArticlesMock.mockResolvedValue(makeResponse());
+
+    function Harness({ url }: { url: string }) {
+      const client = new QueryClient({
+        defaultOptions: { queries: { retry: false, gcTime: 0 } },
+      });
+      return (
+        <QueryClientProvider client={client}>
+          {/* Key on url so MemoryRouter remounts and re-reads initialEntries. */}
+          <MemoryRouter key={url} initialEntries={[url]}>
+            <ArticleList />
+          </MemoryRouter>
+        </QueryClientProvider>
+      );
+    }
+
+    const { rerender } = render(<Harness url={DATE_URL} />);
+    await screen.findByText('Article 1');
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('checkbox', { name: /select article 1/i }));
+    expect(useUIStore.getState().selectedArticleIds.size).toBe(1);
+
+    rerender(<Harness url={OTHER_DATE_URL} />);
+
+    await waitFor(() =>
+      expect(useUIStore.getState().selectedArticleIds.size).toBe(0),
+    );
+    expect(
+      await screen.findByRole('heading', { name: /articles on 2026-10-22/i }),
+    ).toBeInTheDocument();
   });
 })
