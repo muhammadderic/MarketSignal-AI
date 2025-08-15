@@ -138,4 +138,17 @@ describe('ArticleList', () => {
 
     expect(await screen.findByText('Article 1')).toBeInTheDocument();
   });
+
+  it('toggles per-card selection through the shared store (AC-004)', async () => {
+    fetchArticlesMock.mockResolvedValueOnce(makeResponse());
+
+    renderWithProviders(<ArticleList />, [DATE_URL]);
+    await screen.findByText('Article 1');
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('checkbox', { name: /select article 1/i }));
+
+    expect(useUIStore.getState().selectedArticleIds.has(1)).toBe(true);
+    expect(screen.getByTestId('selected-count')).toHaveTextContent('1 selected');
+  });
 })
