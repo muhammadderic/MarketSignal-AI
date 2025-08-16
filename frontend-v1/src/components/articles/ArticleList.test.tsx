@@ -204,4 +204,27 @@ describe('ArticleList', () => {
       await screen.findByRole('heading', { name: /articles on 2026-10-22/i }),
     ).toBeInTheDocument();
   });
+
+  it('preserves selection across pagination within the same date (AC-006)', async () => {
+    fetchArticlesMock.mockImplementation(
+      async ({ offset }: { offset: number }) =>
+        offset === 0
+          ? makeResponse({ total: 120, limit: 50, offset: 0, items: [makeArticle(1)] })
+          : makeResponse({ total: 120, limit: 50, offset: 50, items: [makeArticle(51)] }),
+    );
+
+    renderWithProviders(<ArticleList />, [DATE_URL]);
+    await screen.findByText('Article 1');
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('checkbox', { name: /select article 1/i }));
+    expect(useUIStore.getState().selectedArticleIds.has(1)).toBe(true);
+
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await screen.findByText('Article 51');
+
+    // Selection survives pagination within the same date.
+    expect(useUIStore.getState().selectedArticleIds.has(1)).toBe(true);
+    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 2 of 3');
+  });
 })
