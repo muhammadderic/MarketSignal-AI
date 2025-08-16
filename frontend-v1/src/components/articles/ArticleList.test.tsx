@@ -227,4 +227,16 @@ describe('ArticleList', () => {
     expect(useUIStore.getState().selectedArticleIds.has(1)).toBe(true);
     expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 2 of 3');
   });
+
+  it('disables Prev on first page and Next on last page (AC-007)', async () => {
+    fetchArticlesMock.mockResolvedValueOnce(
+      makeResponse({ total: 120, limit: 50, offset: 0, items: [makeArticle(1)] }),
+    );
+
+    renderWithProviders(<ArticleList />, [DATE_URL]);
+    await screen.findByText('Article 1');
+
+    expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /next/i })).toBeEnabled();
+  });
 })
