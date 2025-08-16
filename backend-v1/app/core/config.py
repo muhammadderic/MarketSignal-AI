@@ -63,6 +63,24 @@ class Settings(BaseSettings):
         description="RSS fetch timeout in seconds (INTEGRATIONS.md).",
     )
 
+    # === GROQ (TITLE RELEVANCE SCORING) ===
+    GROQ_MODEL_TITLE_SCORING: str = Field(
+        default="llama-3.3-70b-versatile",
+        description="Groq model identifier for batch title relevance scoring.",
+    )
+    GROQ_TIMEOUT_SECONDS: float = Field(
+        default=30.0,
+        ge=1.0,
+        le=300.0,
+        description="Groq API request timeout in seconds (INTEGRATIONS.md).",
+    )
+    GROQ_MAX_RETRIES: int = Field(
+        default=3,
+        ge=0,
+        le=10,
+        description="Max retries on Groq HTTP 429/503 with exponential backoff.",
+    )
+
     @model_validator(mode="after")
     def _ensure_sqlite_paths(self) -> "Settings":
         """Create the SQLite parent directory and file if they do not exist.
