@@ -10,7 +10,7 @@ import logging
 from datetime import UTC, date, datetime
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import defer
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -193,6 +193,77 @@ class ArticleRepository:
         result = await db.execute(stmt)
         items = list(result.scalars().all())
         return items, total
+
+    async def get_by_ids(
+        self,
+        db: AsyncSession,
+        article_ids: list[int],
+    ) -> list[Article]:
+        """Fetch article rows by primary key IDs.
+
+        Args:
+            db: Active async session.
+            article_ids: Candidate article IDs (may contain duplicates).
+
+        Returns:
+            Matching :class:`Article` rows; order is not guaranteed. Missing IDs
+            are simply absent from the result.
+        """
+        if not article_ids:
+            return []
+        result = await db.execute(
+            select(Article).where(Article.id.in_(set(article_ids)))
+        )
+        return list(result.scalars().all())
+
+    async def update_relevance_scores(
+        self,
+        db: AsyncSession,
+        updates: list[dict[str, Any]],
+    ) -> None:
+        """Persist relevance scores and reasoning for a batch of articles.
+
+        Only articles whose current ``workflow_state`` is a permitted
+        predecessor (``Ingested``) are advanced to ``Relevance Scored``.
+        Later states are preserved (forward-only lifecycle) while the scoring
+        columns are still refreshed.
+
+        Args:
+            db: Active async session.
+            updates: List of dicts with keys ``id``, ``relevance_score``,
+                ``relevance_reasoning``.
+        """
+        if not updates:
+            return
+
+        now = datetime.now(UTC)
+        for upt in updates:
+            stmt = (
+                update(Article)
+                .where(Article.id == upt["id"])
+                .values(
+                    relevance_score=upt["relevance_score"],
+                    relevance_reasoning=upt["relevance_reasoning"],
+                    updated_at=now,
+                )
+            )
+            await db.execute(stmt)
+
+        # Advance workflow_state forward-only for eligible articles.
+        eligible_ids = [u["id"] for u in updates]
+        advance_stmt = (
+            update(Article)
+            .where(
+                Article.id.in_(eligible_ids),
+                Article.workflow_state == WorkflowState.INGESTED.value,
+            )
+            .values(
+                workflow_state=WorkflowState.RELEVANCE_SCORED.value,
+                updated_at=now,
+            )
+        )
+        await db.execute(advance_stmt)
+        await db.flush()
 
 
 def _utcnow_factory() -> datetime:  # pragma: no cover - helper for tests
