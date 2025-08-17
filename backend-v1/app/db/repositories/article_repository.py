@@ -23,54 +23,30 @@ logger = logging.getLogger(__name__)
 class ArticleRepository:
     """Persistence operations for :class:`~app.db.models.Article`."""
 
-    async def insert_unique(
+    # ------------
+    # --- READ ---
+    # ------------
+    async def get_by_ids(
         self,
         db: AsyncSession,
-        candidates: list[dict[str, Any]],
-    ) -> int:
-        """Insert candidate article rows, silently skipping duplicates.
-
-        Uniqueness is enforced at the database layer via
-        ``uq_articles_url_hash`` and ``uq_articles_title_published_at_date``.
-        ``ON CONFLICT DO NOTHING`` avoids a separate pre-check query and is
-        race-safe.
+        article_ids: list[int],
+    ) -> list[Article]:
+        """Fetch article rows by primary key IDs.
 
         Args:
-            db: Active async session (commit handled by caller/dependency).
-            candidates: Normalized row dicts keyed by ORM column name. Each
-                dict must include at least ``google_url``, ``url_hash``,
-                ``title``, ``published_at``, ``published_at_date``,
-                ``source_name``, ``workflow_state``, ``scraping_status``.
+            db: Active async session.
+            article_ids: Candidate article IDs (may contain duplicates).
 
         Returns:
-            Number of rows actually inserted. ``len(candidates) - inserted`` is
-            the duplicate count.
+            Matching :class:`Article` rows; order is not guaranteed. Missing IDs
+            are simply absent from the result.
         """
-        if not candidates:
-            return 0
-
-        now = datetime.now(UTC)
-        rows = [
-            {
-                "workflow_state": WorkflowState.INGESTED.value,
-                "scraping_status": ScrapingStatus.PENDING.value,
-                "created_at": now,
-                "updated_at": now,
-                **candidate,
-            }
-            for candidate in candidates
-        ]
-
-        stmt = (
-            sqlite_insert(Article)
-            .values(rows)
-            .on_conflict_do_nothing()
-            .returning(Article.id)
+        if not article_ids:
+            return []
+        result = await db.execute(
+            select(Article).where(Article.id.in_(set(article_ids)))
         )
-        result = await db.execute(stmt)
-        inserted_ids = result.scalars().all()
-        await db.flush()
-        return len(inserted_ids)
+        return list(result.scalars().all())
 
     async def count_existing_hashes(
         self,
@@ -194,28 +170,61 @@ class ArticleRepository:
         items = list(result.scalars().all())
         return items, total
 
-    async def get_by_ids(
+    # --------------
+    # --- CREATE ---
+    # --------------
+    async def insert_unique(
         self,
         db: AsyncSession,
-        article_ids: list[int],
-    ) -> list[Article]:
-        """Fetch article rows by primary key IDs.
+        candidates: list[dict[str, Any]],
+    ) -> int:
+        """Insert candidate article rows, silently skipping duplicates.
+
+        Uniqueness is enforced at the database layer via
+        ``uq_articles_url_hash`` and ``uq_articles_title_published_at_date``.
+        ``ON CONFLICT DO NOTHING`` avoids a separate pre-check query and is
+        race-safe.
 
         Args:
-            db: Active async session.
-            article_ids: Candidate article IDs (may contain duplicates).
+            db: Active async session (commit handled by caller/dependency).
+            candidates: Normalized row dicts keyed by ORM column name. Each
+                dict must include at least ``google_url``, ``url_hash``,
+                ``title``, ``published_at``, ``published_at_date``,
+                ``source_name``, ``workflow_state``, ``scraping_status``.
 
         Returns:
-            Matching :class:`Article` rows; order is not guaranteed. Missing IDs
-            are simply absent from the result.
+            Number of rows actually inserted. ``len(candidates) - inserted`` is
+            the duplicate count.
         """
-        if not article_ids:
-            return []
-        result = await db.execute(
-            select(Article).where(Article.id.in_(set(article_ids)))
-        )
-        return list(result.scalars().all())
+        if not candidates:
+            return 0
 
+        now = datetime.now(UTC)
+        rows = [
+            {
+                "workflow_state": WorkflowState.INGESTED.value,
+                "scraping_status": ScrapingStatus.PENDING.value,
+                "created_at": now,
+                "updated_at": now,
+                **candidate,
+            }
+            for candidate in candidates
+        ]
+
+        stmt = (
+            sqlite_insert(Article)
+            .values(rows)
+            .on_conflict_do_nothing()
+            .returning(Article.id)
+        )
+        result = await db.execute(stmt)
+        inserted_ids = result.scalars().all()
+        await db.flush()
+        return len(inserted_ids)
+
+    # --------------
+    # --- UPDATE ---
+    # --------------
     async def update_relevance_scores(
         self,
         db: AsyncSession,
