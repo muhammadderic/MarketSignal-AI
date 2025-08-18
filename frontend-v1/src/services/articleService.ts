@@ -1,5 +1,5 @@
 import { apiClient } from '@/api/apiClient';
-import type { Article, ArticleListResponse } from '@/types/article';
+import type { Article, ArticleBatchScoreResponse, ArticleListResponse } from '@/types/article';
 
 export interface ListArticlesParams {
   dateISO: string;
@@ -25,6 +25,23 @@ export async function fetchArticles(params: ListArticlesParams): Promise<Article
   const { data } = await apiClient.get<ArticleListResponse>('/articles', {
     params: query,
   });
+  return data;
+}
+
+/**
+ * Submit selected article IDs for LLM title relevance scoring.
+ * Consumes `POST /api/v1/articles/score-relevance` (API_CONTRACTS.md §Endpoint: Batch Title Relevance Scoring).
+ *
+ * The backend enforces per-article fault isolation, so a 200 response may
+ * contain both `SUCCESS` and `FAILED` items.
+ */
+export async function scoreArticlesRelevance(
+  articleIds: number[],
+): Promise<ArticleBatchScoreResponse> {
+  const { data } = await apiClient.post<ArticleBatchScoreResponse>(
+    '/articles/score-relevance',
+    { article_ids: articleIds },
+  );
   return data;
 }
 
