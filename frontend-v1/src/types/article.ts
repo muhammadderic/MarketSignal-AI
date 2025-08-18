@@ -45,3 +45,25 @@ export interface ArticlePagination {
   limit: number;
   offset: number;
 }
+
+// --------------------------------------
+// --- The Batch Scoring API Contract ---
+// --------------------------------------
+export type ScoreItemStatus = 'SUCCESS' | 'FAILED';
+
+/** Per-article result returned by POST /api/v1/articles/score-relevance. */
+export interface ScoreItemResult {
+  article_id: number;
+  status: ScoreItemStatus;
+  relevance_score: number | null;
+  relevance_reasoning: string | null;
+  error: string | null;
+}
+
+/** Response body for POST /api/v1/articles/score-relevance (API_CONTRACTS.md). */
+export interface ArticleBatchScoreResponse {
+  processed_count: number;
+  success_count: number;
+  failed_count: number;
+  results: ScoreItemResult[];
+}
