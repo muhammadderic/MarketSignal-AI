@@ -1,34 +1,16 @@
 import { ExternalLink } from 'lucide-react';
-import type { Article, ScrapingStatus, WorkflowState } from '@/types/article';
+import type { Article } from '@/types/article';
+import { ScoreBadge } from './ScoreBadge';
 
 export interface ArticleCardProps {
   article: Article;
   isSelected: boolean;
   onToggleSelection: (id: number) => void;
+  /** Single-article score trigger (AC-007 / FR-009). */
+  onScoreArticle?: (id: number) => void;
+  /** True while a scoring mutation is pending for this article. */
+  isScoring?: boolean;
 }
-
-const SCORE_BADGE_CLASS: Record<number, string> = {
-  1: 'bg-red-100 text-red-800 border-red-200',
-  2: 'bg-orange-100 text-orange-800 border-orange-200',
-  3: 'bg-amber-100 text-amber-800 border-amber-200',
-  4: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  5: 'bg-emerald-200 text-emerald-900 border-emerald-300',
-};
-
-const WORKFLOW_BADGE_CLASS: Record<WorkflowState, string> = {
-  Ingested: 'bg-slate-100 text-slate-700 border-slate-200',
-  'Relevance Scored': 'bg-blue-100 text-blue-800 border-blue-200',
-  'URL Resolved': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  Scraped: 'bg-violet-100 text-violet-800 border-violet-200',
-  'Financial Insight Extracted': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-};
-
-const SCRAPING_BADGE_CLASS: Record<ScrapingStatus, string> = {
-  PENDING: 'bg-slate-100 text-slate-600 border-slate-200',
-  IN_PROGRESS: 'bg-amber-100 text-amber-800 border-amber-200',
-  SUCCESS: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  FAILED: 'bg-red-100 text-red-800 border-red-200',
-};
 
 function formatPublishedAt(iso: string): string {
   const parsed = new Date(iso);
@@ -36,18 +18,15 @@ function formatPublishedAt(iso: string): string {
   return `${parsed.toISOString().slice(0, 10)} ${parsed.toISOString().slice(11, 16)} UTC`;
 }
 
-function scoreClass(score: number | null): string {
-  if (score === null) return 'bg-slate-100 text-slate-600 border-slate-200';
-  return SCORE_BADGE_CLASS[score] ?? 'bg-slate-100 text-slate-600 border-slate-200';
-}
-
-export function ArticleCard({ article, isSelected, onToggleSelection }: ArticleCardProps) {
+export function ArticleCard({
+  article,
+  isSelected,
+  onToggleSelection,
+  onScoreArticle,
+  isScoring,
+}: ArticleCardProps) {
   const linkUrl = article.resolved_url ?? article.google_url;
   const linkLabel = article.resolved_url ? 'Publisher URL' : 'Google News URL';
-  const scoreTitle =
-    article.relevance_score !== null && article.relevance_reasoning
-      ? `Score ${article.relevance_score}: ${article.relevance_reasoning}`
-      : article.relevance_reasoning ?? undefined;
 
   return (
     <article
@@ -93,24 +72,12 @@ export function ArticleCard({ article, isSelected, onToggleSelection }: ArticleC
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`rounded border px-1.5 py-0.5 text-xs font-medium ${scoreClass(article.relevance_score)}`}
-            title={scoreTitle}
-          >
-            {article.relevance_score !== null
-              ? `Score ${article.relevance_score}/5`
-              : 'Unscored'}
-          </span>
-          <span
-            className={`rounded border px-1.5 py-0.5 text-xs font-medium ${WORKFLOW_BADGE_CLASS[article.workflow_state]}`}
-          >
-            {article.workflow_state}
-          </span>
-          <span
-            className={`rounded border px-1.5 py-0.5 text-xs font-medium ${SCRAPING_BADGE_CLASS[article.scraping_status]}`}
-          >
-            Scrape: {article.scraping_status}
-          </span>
+          <ScoreBadge
+            score={article.relevance_score}
+            reasoning={article.relevance_reasoning}
+            onScore={onScoreArticle ? () => onScoreArticle(article.id) : undefined}
+            isScoring={isScoring}
+          />
         </div>
 
         {article.relevance_reasoning ? (
