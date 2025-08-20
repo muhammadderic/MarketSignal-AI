@@ -4,6 +4,8 @@ import { useArticles } from '@/hooks/useArticles';
 import { useUIStore } from '@/stores/useUIStore';
 import { ArticleCard } from '@/components/articles/ArticleCard';
 import { BatchToolbar } from '@/components/articles/BatchToolbar';
+import { useScoreRelevance } from '@/hooks/useScoreRelevance';
+import type { ArticleBatchScoreResponse } from '@/types/article';
 
 const PAGE_SIZE = 50;
 
@@ -70,6 +72,29 @@ function ArticleListBody({ date }: ArticleListBodyProps) {
     selectAll(ids);
   };
 
+  // === SCORING ===
+  const scoreMutation = useScoreRelevance();
+  const [lastScoreSummary, setLastScoreSummary] = useState<string | null>(null);
+
+  const handleScoreRelevance = (ids: number[]) => {
+  if (ids.length === 0) return;
+    setLastScoreSummary(null);
+    scoreMutation.mutate(ids, {
+      onSuccess: (res: ArticleBatchScoreResponse) => {
+        setLastScoreSummary(
+          `Scored ${res.success_count}, ${res.failed_count} failed of ${res.processed_count}`,
+        );
+      },
+      onError: (err: Error) => {
+        setLastScoreSummary(`Scoring failed: ${err.message}`);
+      },
+    });
+  };
+
+  const handleScoreSingle = (id: number) => {
+    handleScoreRelevance([id]);
+  };
+
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
@@ -86,6 +111,9 @@ function ArticleListBody({ date }: ArticleListBodyProps) {
         selectedIds={selectedIds}
         onToggleAll={handleSelectAllVisible}
         onClearSelection={clearSelection}
+        onScoreRelevance={handleScoreRelevance}
+        isScoring={scoreMutation.isPending}
+        scoreSummary={lastScoreSummary}
       />
 
       {isError ? (
@@ -122,6 +150,8 @@ function ArticleListBody({ date }: ArticleListBodyProps) {
               article={article}
               isSelected={selectedIds.has(article.id)}
               onToggleSelection={toggleArticleSelection}
+              onScoreArticle={handleScoreSingle}
+              isScoring={scoreMutation.isPending && scoreMutation.variables?.includes(article.id)}
             />
           ))}
         </div>
