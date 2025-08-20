@@ -9,6 +9,10 @@ export interface BatchToolbarProps {
   onScoreRelevance?: (ids: number[]) => void;
   onResolveUrls?: (ids: number[]) => void;
   onScrapeArticles?: (ids: number[]) => void;
+  /** True while the batch scoring mutation is in flight (NFR-008). */
+  isScoring?: boolean;
+  /** Last batch scoring result summary, e.g. "Scored 3, 1 failed". */
+  scoreSummary?: string | null;
 }
 
 export function BatchToolbar({
@@ -19,6 +23,8 @@ export function BatchToolbar({
   onScoreRelevance,
   onResolveUrls,
   onScrapeArticles,
+  isScoring,
+  scoreSummary,
 }: BatchToolbarProps) {
   const selectAllRef = useRef<HTMLInputElement>(null);
   const visibleIds = visibleArticles.map((a) => a.id);
@@ -71,14 +77,22 @@ export function BatchToolbar({
       </div>
 
       <div className="flex flex-wrap gap-2">
+        {/* === SCORING BUTTON === */}
         <button
           type="button"
-          disabled={!hasSelection}
+          disabled={!hasSelection || isScoring}
           onClick={() => onScoreRelevance?.(selectedArray)}
           className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Score Relevance
+          {isScoring ? 'Scoring…' : 'Score Relevance'}
         </button>
+        {scoreSummary ? (
+          <span className="self-center text-xs text-slate-600" role="status" data-testid="score-summary">
+            {scoreSummary}
+          </span>
+        ) : null}
+
+        {/* === RESOLVING URL BUTTON === */}
         <button
           type="button"
           disabled={!hasSelection}
