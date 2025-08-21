@@ -28,4 +28,7 @@ def get_groq_client() -> AsyncGroq:
             "Groq API key is not configured.",
             context={"component": "groq_client"},
         )
-    return AsyncGroq(api_key=settings.GROQ_API_KEY.get_secret_value())
+    return AsyncGroq(
+        api_key=settings.GROQ_API_KEY.get_secret_value(),
+        max_retries=0,  # app-level retry/backoff already lives in relevance.py
+    )
