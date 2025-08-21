@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     # === GROQ (TITLE RELEVANCE SCORING) ===
     GROQ_MODEL_TITLE_SCORING: str = Field(
-        default="llama-3.3-70b-versatile",
+        default="openai/gpt-oss-20b",
         description="Groq model identifier for batch title relevance scoring.",
     )
     GROQ_TIMEOUT_SECONDS: float = Field(
