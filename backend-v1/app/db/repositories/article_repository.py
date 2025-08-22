@@ -274,6 +274,60 @@ class ArticleRepository:
         await db.execute(advance_stmt)
         await db.flush()
 
+    async def update_resolution_results(
+        self,
+        db: AsyncSession,
+        updates: list[dict[str, Any]],
+    ) -> None:
+        """Persist resolved URLs and optional normalized source names.
+
+        For each update, writes ``resolved_url`` and (when provided)
+        ``source_name``, and advances ``workflow_state`` forward-only to
+        ``URL Resolved`` only when the current state is ``Ingested`` or
+        ``Relevance Scored`` (Q5(b), FEAT-005).
+
+        Args:
+            db: Active async session.
+            updates: List of dicts with keys ``id``, ``resolved_url``,
+                ``source_name`` (optional, may be ``None``).
+        """
+        if not updates:
+            return
+
+        now = datetime.now(UTC)
+        for update in updates:
+            values: dict[str, Any] = {
+                "resolved_url": update["resolved_url"],
+                "updated_at": now,
+            }
+            if update.get("source_name") is not None:
+                values["source_name"] = update["source_name"]
+            await db.execute(
+                update(Article)
+                .where(Article.id == update["id"])
+                .values(**values)
+            )
+
+        eligible_ids = [u["id"] for u in updates]
+        advance_stmt = (
+            update(Article)
+            .where(
+                Article.id.in_(eligible_ids),
+                Article.workflow_state.in_(
+                    [
+                        WorkflowState.INGESTED.value,
+                        WorkflowState.RELEVANCE_SCORED.value,
+                    ]
+                ),
+            )
+            .values(
+                workflow_state=WorkflowState.URL_RESOLVED.value,
+                updated_at=now,
+            )
+        )
+        await db.execute(advance_stmt)
+        await db.flush()
+
 
 def _utcnow_factory() -> datetime:  # pragma: no cover - helper for tests
     return datetime.now(UTC)
