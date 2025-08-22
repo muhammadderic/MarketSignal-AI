@@ -81,6 +81,24 @@ class Settings(BaseSettings):
         description="Max retries on Groq HTTP 429/503 with exponential backoff.",
     )
 
+    # === SCRAPER / PUBLISHER URL RESOLUTION ===
+    SCRAPER_TIMEOUT_SECONDS: float = Field(
+        default=15.0,
+        ge=1.0,
+        le=120.0,
+        description="Publisher HTTP timeout in seconds (INTEGRATIONS.md).",
+    )
+    SCRAPER_MAX_REDIRECTS: int = Field(
+        default=10,
+        ge=1,
+        le=30,
+        description="Max HTTP location redirect hops during URL resolution.",
+    )
+    SCRAPER_USER_AGENT: str = Field(
+        default="MarketSignalAI/1.0 (+http://localhost)",
+        description="User-Agent header for publisher HTTP requests.",
+    )
+
     @model_validator(mode="after")
     def _ensure_sqlite_paths(self) -> "Settings":
         """Create the SQLite parent directory and file if they do not exist.
