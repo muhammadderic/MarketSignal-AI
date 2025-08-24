@@ -1,5 +1,10 @@
 import { apiClient } from '@/api/apiClient';
-import type { Article, ArticleBatchScoreResponse, ArticleListResponse } from '@/types/article';
+import type { 
+  Article, 
+  ArticleBatchScoreResponse, 
+  ArticleListResponse, 
+  ArticleResolveURLResponse 
+} from '@/types/article';
 
 export interface ListArticlesParams {
   dateISO: string;
@@ -40,6 +45,24 @@ export async function scoreArticlesRelevance(
 ): Promise<ArticleBatchScoreResponse> {
   const { data } = await apiClient.post<ArticleBatchScoreResponse>(
     '/articles/score-relevance',
+    { article_ids: articleIds },
+  );
+  return data;
+}
+
+/**
+ * Submit selected article IDs for batch publisher URL resolution.
+ * Consumes `POST /api/v1/articles/resolve-url` (API_CONTRACTS.md §Endpoint: Batch Publisher URL Resolution).
+ *
+ * The backend resolves Google News redirect URLs to canonical publisher URLs,
+ * updates `workflow_state` to `'URL Resolved'` on success, and isolates
+ * per-article failures (returned in `results` with `status: "FAILED"`).
+ */
+export async function resolveArticleURLs(
+  articleIds: number[],
+): Promise<ArticleResolveURLResponse> {
+  const { data } = await apiClient.post<ArticleResolveURLResponse>(
+    '/articles/resolve-url',
     { article_ids: articleIds },
   );
   return data;
