@@ -67,3 +67,24 @@ export interface ArticleBatchScoreResponse {
   failed_count: number;
   results: ScoreItemResult[];
 }
+
+// ----------------------
+// --- Resolving APIs ---
+// ----------------------
+export type ResolveItemStatus = 'SUCCESS' | 'FAILED';
+
+/** Per-article result returned by POST /api/v1/articles/resolve-url. */
+export interface ResolveItemResult {
+  article_id: number;
+  status: ResolveItemStatus;
+  resolved_url: string | null;
+  error: string | null;
+}
+
+/** Response body for POST /api/v1/articles/resolve-url (API_CONTRACTS.md). */
+export interface ArticleResolveURLResponse {
+  processed_count: number;
+  success_count: number;
+  failed_count: number;
+  results: ResolveItemResult[];
+}
