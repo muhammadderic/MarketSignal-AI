@@ -12,6 +12,7 @@ dependencies = [
     "alembic>=1.20.0",
     "fastapi>=0.143.3",
     "feedparser>=6.0.14",
+    "googlenewsdecoder>=0.2.2",
     "groq>=1.7.0",
     "httpx>=0.28.1",
     "pydantic>=2.14.1",

@@ -246,20 +246,20 @@ class ArticleRepository:
             return
 
         now = datetime.now(UTC)
-        for upt in updates:
+        for row in updates:
             stmt = (
                 update(Article)
-                .where(Article.id == upt["id"])
+                .where(Article.id == row["id"])
                 .values(
-                    relevance_score=upt["relevance_score"],
-                    relevance_reasoning=upt["relevance_reasoning"],
+                    relevance_score=row["relevance_score"],
+                    relevance_reasoning=row["relevance_reasoning"],
                     updated_at=now,
                 )
             )
             await db.execute(stmt)
 
         # Advance workflow_state forward-only for eligible articles.
-        eligible_ids = [u["id"] for u in updates]
+        eligible_ids = [row["id"] for row in updates]
         advance_stmt = (
             update(Article)
             .where(
@@ -295,20 +295,20 @@ class ArticleRepository:
             return
 
         now = datetime.now(UTC)
-        for update in updates:
+        for row in updates:
             values: dict[str, Any] = {
-                "resolved_url": update["resolved_url"],
+                "resolved_url": row["resolved_url"],
                 "updated_at": now,
             }
-            if update.get("source_name") is not None:
-                values["source_name"] = update["source_name"]
+            if row.get("source_name") is not None:
+                values["source_name"] = row["source_name"]
             await db.execute(
                 update(Article)
-                .where(Article.id == update["id"])
+                .where(Article.id == row["id"])
                 .values(**values)
             )
 
-        eligible_ids = [u["id"] for u in updates]
+        eligible_ids = [row["id"] for row in updates]
         advance_stmt = (
             update(Article)
             .where(
