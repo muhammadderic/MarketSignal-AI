@@ -5,7 +5,8 @@ import { useUIStore } from '@/stores/useUIStore';
 import { ArticleCard } from '@/components/articles/ArticleCard';
 import { BatchToolbar } from '@/components/articles/BatchToolbar';
 import { useScoreRelevance } from '@/hooks/useScoreRelevance';
-import type { ArticleBatchScoreResponse } from '@/types/article';
+import type { ArticleBatchScoreResponse, ArticleResolveURLResponse } from '@/types/article';
+import { useResolveURLs } from '@/hooks/useResolveURLs';
 
 const PAGE_SIZE = 50;
 
@@ -95,6 +96,25 @@ function ArticleListBody({ date }: ArticleListBodyProps) {
     handleScoreRelevance([id]);
   };
 
+  // === RESOLVING URLS ===
+  const resolveMutation = useResolveURLs();
+  const [lastResolveSummary, setLastResolveSummary] = useState<string | null>(null);
+
+  const handleResolveUrls = (ids: number[]) => {
+    if (ids.length === 0) return;
+    setLastResolveSummary(null);
+    resolveMutation.mutate(ids, {
+      onSuccess: (res: ArticleResolveURLResponse) => {
+        setLastResolveSummary(
+          `Resolved ${res.success_count}, ${res.failed_count} failed of ${res.processed_count}`,
+        );
+      },
+      onError: (err: Error) => {
+        setLastResolveSummary(`Resolution failed: ${err.message}`);
+      },
+    });
+  };
+
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
@@ -114,6 +134,9 @@ function ArticleListBody({ date }: ArticleListBodyProps) {
         onScoreRelevance={handleScoreRelevance}
         isScoring={scoreMutation.isPending}
         scoreSummary={lastScoreSummary}
+        onResolveUrls={handleResolveUrls}
+        isResolving={resolveMutation.isPending}
+        resolveSummary={lastResolveSummary}
       />
 
       {isError ? (
