@@ -1,10 +1,12 @@
 """Publisher URL resolution service.
 
-Unrolls Google News redirect URLs (``google_url``) into canonical publisher
-URLs (``resolved_url``) using the shared ``httpx.AsyncClient`` (ARC-002). Each
-article is isolated per ARC-006; batches are throttled by
-``asyncio.Semaphore(5)`` and bounded by ``SCRAPER_MAX_REDIRECTS`` /
-``SCRAPER_TIMEOUT_SECONDS`` (INTEGRATIONS.md, FEAT-005).
+Decodes Google News URLs (``google_url``) into canonical publisher URLs
+(``resolved_url``) using ``googlenewsdecoder``, which interrogates Google's
+``batchexecute`` RPC endpoint (FEAT-005 v2 §3.4). Decoding is synchronous;
+it is offloaded to a thread pool via ``asyncio.to_thread`` and bounded by
+``asyncio.wait_for(timeout=settings.SCRAPER_TIMEOUT_SECONDS)`` (ARC-002).
+Per-article failures are isolated (ARC-006) and batch decoding is throttled
+by ``asyncio.Semaphore(5)`` (INTEGRATIONS.md).
 """
 
 from __future__ import annotations
@@ -14,12 +16,10 @@ import logging
 from typing import Any
 from urllib.parse import urlparse
 
-import httpx
+from googlenewsdecoder import gnewsdecoder
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.clients.http_client import get_http_client
 from app.core.config import settings
-from app.core.error_handlers import ServiceUnavailableError
 from app.db.models import Article
 from app.db.repositories.article_repository import ArticleRepository
 from app.schemas.resolver import (
