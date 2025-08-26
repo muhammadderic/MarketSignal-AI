@@ -92,7 +92,7 @@ class ResolverService:
         db: AsyncSession,
         article_ids: list[int],
     ) -> ArticleResolveURLResponse:
-        """Resolve the URLs of the requested articles.
+        """Decode the URLs of the requested articles.
 
         Args:
             db: Active async session.
@@ -156,8 +156,8 @@ class ResolverService:
         ]
 
         if success_updates:
-            # Q4(b): DB failures must roll back and propagate, not be
-            # converted into per-item failures.
+            # DB failures must roll back and propagate (not become per-item
+            # failures) so the global handler reports a 500 envelope.
             await self.article_repo.update_resolution_results(
                 db, success_updates
             )
@@ -174,7 +174,7 @@ class ResolverService:
     ) -> ArticleResolveItemResult:
         """Resolve a single article's ``google_url`` with fault isolation."""
         async with self._semaphore:
-            resolved_url, error = await self._resolve_url(article.google_url)
+            resolved_url, error = await self._decode_url(article.google_url)
 
         if resolved_url is None:
             logger.info(
@@ -198,77 +198,61 @@ class ResolverService:
             resolved_url=resolved_url,
         )
 
-    async def _resolve_url(
+    async def _decode_url(
         self,
         google_url: str,
     ) -> tuple[str | None, str | None]:
-        """Follow redirects from ``google_url`` to the canonical publisher URL.
+        """Decode a Google News URL via ``googlenewsdecoder.gnewsdecoder``.
+
+        ``gnewsdecoder`` is synchronous and performs an internal
+        ``batchexecute`` RPC; it is executed in a worker thread so the asyncio
+        event loop remains non-blocking. The whole call is bounded by
+        ``settings.SCRAPER_TIMEOUT_SECONDS`` in two complementary ways:
+
+        * ``timeout=settings.SCRAPER_TIMEOUT_SECONDS`` passed to ``gnewsdecoder``
+          so its internal HTTP call respects the budget.
+        * ``asyncio.wait_for(..., timeout=settings.SCRAPER_TIMEOUT_SECONDS)``
+          guarding the thread hop so a hung decoder cannot stall the batch.
 
         Returns:
             ``(resolved_url, None)`` on success; ``(None, error)`` on failure.
         """
         try:
-            client = get_http_client()
-        except ServiceUnavailableError as exc:
-            # Client not initialized → batch-level failure per Q4.
-            raise ServiceUnavailableError(
-                "HTTP client is not initialized.",
-                context={"component": "resolver_service"},
-            ) from exc
-
-        try:
-            response = await client.get(
-                google_url,
-                follow_redirects=True,
-                max_redirects=settings.SCRAPER_MAX_REDIRECTS,
-                timeout=httpx.Timeout(
-                    settings.SCRAPER_TIMEOUT_SECONDS,
-                    connect=settings.SCRAPER_TIMEOUT_SECONDS,
-                    read=settings.SCRAPER_TIMEOUT_SECONDS,
-                ),
-                headers={"User-Agent": settings.SCRAPER_USER_AGENT},
-            )
-        except httpx.TooManyRedirects:
-            return None, (
-                f"Exceeded {settings.SCRAPER_MAX_REDIRECTS} redirect hops."
-            )
-        except (httpx.ConnectError, httpx.ReadTimeout) as first_exc:
-            # INTEGRATIONS.md: 1 retry on connection reset / socket timeout.
-            logger.warning(
-                "Publisher connection error; retrying once",
-                extra={
-                    "context": {
-                        "url": google_url,
-                        "error": str(first_exc),
-                    }
-                },
-            )
-            try:
-                response = await client.get(
+            decoded = await asyncio.wait_for(
+                asyncio.to_thread(
+                    gnewsdecoder,
                     google_url,
-                    follow_redirects=True,
-                    max_redirects=settings.SCRAPER_MAX_REDIRECTS,
-                    timeout=httpx.Timeout(
-                        settings.SCRAPER_TIMEOUT_SECONDS,
-                        connect=settings.SCRAPER_TIMEOUT_SECONDS,
-                        read=settings.SCRAPER_TIMEOUT_SECONDS,
-                    ),
-                    headers={"User-Agent": settings.SCRAPER_USER_AGENT},
-                )
-            except httpx.HTTPError as retry_exc:
-                return None, f"Connection failed: {retry_exc}"
-        except httpx.HTTPError as exc:
-            return None, f"HTTP error: {exc}"
+                    interval=1,
+                    timeout=float(settings.SCRAPER_TIMEOUT_SECONDS),
+                ),
+                timeout=settings.SCRAPER_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            return None, (
+                f"Decoder timed out after "
+                f"{settings.SCRAPER_TIMEOUT_SECONDS}s."
+            )
+        except ValueError as exc:
+            return None, f"Decoder rejected the URL: {exc}"
+        except Exception as exc:  # noqa: BLE001 — per-item fault isolation
+            return None, f"Decoder error: {exc}"
 
-        if response.status_code != 200:
-            return None, f"HTTP {response.status_code} from publisher."
+        # Confirmed shape (googlenewsdecoder 0.2.2):
+        #   {"success": True, "decoded_url": "https://..."}
+        if not isinstance(decoded, dict):
+            return None, "Decoder returned an unexpected payload."
+        if not decoded.get("success"):
+            return None, "Decoder reported failure."
+        resolved = decoded.get("decoded_url")
+        if not isinstance(resolved, str) or not resolved.strip():
+            return None, "Decoder returned no URL."
 
-        resolved_url = str(response.url)
-        scheme = urlparse(resolved_url).scheme.lower()
-        if scheme != "https":
-            return None, f"Resolved URL is not HTTPS: {resolved_url}"
+        resolved = resolved.strip()
+        scheme = urlparse(resolved).scheme.lower()
+        if scheme not in ("http", "https"):
+            return None, f"Decoded URL has unsupported scheme: {resolved}"
 
-        return resolved_url, None
+        return resolved, None
 
     @staticmethod
     def _lookup_source_for_update(
@@ -277,8 +261,8 @@ class ResolverService:
     ) -> str | None:
         """Return a normalized publisher name or ``None`` if no change is needed.
 
-        Implements Q7: only fill missing/generic ``source_name``; do not
-        overwrite an existing meaningful value.
+        Only fill missing/generic ``source_name``; do not overwrite an existing
+        meaningful value (R-006).
         """
         current = (article.source_name or "").strip()
         if current and current.lower() not in _GENERIC_SOURCE_NAMES:
@@ -306,7 +290,7 @@ class ResolverService:
 # --- HELPERS ---
 # ---------------
 def _derive_publisher_name(host: str) -> str | None:
-    """Derive a display publisher name from a host string (Q6).
+    """Derive a display publisher name from a host string.
 
     Strips ``www.``, applies the fixed mapping, then falls back to the
     registrable label title-cased (``example.co.uk`` → ``"Example"``).
