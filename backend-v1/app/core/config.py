@@ -86,13 +86,10 @@ class Settings(BaseSettings):
         default=15.0,
         ge=1.0,
         le=120.0,
-        description="Publisher HTTP timeout in seconds (INTEGRATIONS.md).",
-    )
-    SCRAPER_MAX_REDIRECTS: int = Field(
-        default=10,
-        ge=1,
-        le=30,
-        description="Max HTTP location redirect hops during URL resolution.",
+        description=(
+            "Time budget for the Google News URL decoder and publisher HTTP "
+            "requests."
+        ),
     )
     SCRAPER_USER_AGENT: str = Field(
         default="MarketSignalAI/1.0 (+http://localhost)",
