@@ -328,5 +328,119 @@ class ArticleRepository:
         await db.execute(advance_stmt)
         await db.flush()
 
+    async def mark_scraping_in_progress(
+        self,
+        db: AsyncSession,
+        article_ids: list[int],
+    ) -> None:
+        """Transition articles to ``scraping_status = 'IN_PROGRESS'``.
+
+        Applied before batch HTTP fetches so concurrent reads observe the
+        active state (FR-014). Does not change ``workflow_state``.
+
+        Args:
+            db: Active async session.
+            article_ids: Target article IDs.
+        """
+        if not article_ids:
+            return
+
+        now = datetime.now(UTC)
+        stmt = (
+            update(Article)
+            .where(Article.id.in_(article_ids))
+            .values(
+                scraping_status=ScrapingStatus.IN_PROGRESS.value,
+                updated_at=now,
+            )
+        )
+        await db.execute(stmt)
+        await db.flush()
+
+    async def update_scraping_results(
+        self,
+        db: AsyncSession,
+        updates: list[dict[str, Any]],
+    ) -> None:
+        """Persist successful scraped content and advance workflow state.
+
+        Sets ``scraped_content``, ``scraped_at``, ``scraping_status='SUCCESS'``,
+        clears ``scraping_error``, and advances ``workflow_state`` to
+        ``Scraped`` when the current state is a permitted predecessor
+        (``URL Resolved`` or earlier). Later states are preserved
+        (forward-only lifecycle, ARC-005).
+
+        Args:
+            db: Active async session.
+            updates: List of dicts with keys ``id``, ``scraped_content``.
+        """
+        if not updates:
+            return
+
+        now = datetime.now(UTC)
+        for row in updates:
+            await db.execute(
+                update(Article)
+                .where(Article.id == row["id"])
+                .values(
+                    scraped_content=row["scraped_content"],
+                    scraped_at=now,
+                    scraping_status=ScrapingStatus.SUCCESS.value,
+                    scraping_error=None,
+                    updated_at=now,
+                )
+            )
+
+        eligible_ids = [row["id"] for row in updates]
+        advance_stmt = (
+            update(Article)
+            .where(
+                Article.id.in_(eligible_ids),
+                Article.workflow_state.in_(
+                    [
+                        WorkflowState.INGESTED.value,
+                        WorkflowState.RELEVANCE_SCORED.value,
+                        WorkflowState.URL_RESOLVED.value,
+                    ]
+                ),
+            )
+            .values(
+                workflow_state=WorkflowState.SCRAPED.value,
+                updated_at=now,
+            )
+        )
+        await db.execute(advance_stmt)
+        await db.flush()
+
+    async def update_scraping_failures(
+        self,
+        db: AsyncSession,
+        updates: list[dict[str, Any]],
+    ) -> None:
+        """Record scraping failures without destroying prior data (ARC-005).
+
+        Sets ``scraping_status='FAILED'`` and ``scraping_error``. Existing
+        ``scraped_content`` and ``workflow_state`` are preserved.
+
+        Args:
+            db: Active async session.
+            updates: List of dicts with keys ``id``, ``error``.
+        """
+        if not updates:
+            return
+
+        now = datetime.now(UTC)
+        for row in updates:
+            await db.execute(
+                update(Article)
+                .where(Article.id == row["id"])
+                .values(
+                    scraping_status=ScrapingStatus.FAILED.value,
+                    scraping_error=row["error"],
+                    updated_at=now,
+                )
+            )
+        await db.flush()
+
 
 __all__ = ["ArticleRepository"]
