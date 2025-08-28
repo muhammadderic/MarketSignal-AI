@@ -329,8 +329,4 @@ class ArticleRepository:
         await db.flush()
 
 
-def _utcnow_factory() -> datetime:  # pragma: no cover - helper for tests
-    return datetime.now(UTC)
-
-
 __all__ = ["ArticleRepository"]
