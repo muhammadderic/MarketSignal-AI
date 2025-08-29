@@ -3,7 +3,8 @@ import type {
   Article, 
   ArticleBatchScoreResponse, 
   ArticleListResponse, 
-  ArticleResolveURLResponse 
+  ArticleResolveURLResponse, 
+  ArticleScrapeResponse
 } from '@/types/article';
 
 export interface ListArticlesParams {
@@ -63,6 +64,24 @@ export async function resolveArticleURLs(
 ): Promise<ArticleResolveURLResponse> {
   const { data } = await apiClient.post<ArticleResolveURLResponse>(
     '/articles/resolve-url',
+    { article_ids: articleIds },
+  );
+  return data;
+}
+
+/**
+ * Submit selected article IDs for batch article content scraping.
+ * Consumes `POST /api/v1/articles/scrape` (API_CONTRACTS.md §Endpoint: Batch Article Content Scraping).
+ *
+ * The backend requires `resolved_url` to be non-null for every submitted
+ * article (otherwise HTTP 400); per-article failures are surfaced inside
+ * `results` with `scraping_status: "FAILED"` and a descriptive `error`.
+ */
+export async function scrapeArticles(
+  articleIds: number[],
+): Promise<ArticleScrapeResponse> {
+  const { data } = await apiClient.post<ArticleScrapeResponse>(
+    '/articles/scrape',
     { article_ids: articleIds },
   );
   return data;
