@@ -88,3 +88,22 @@ export interface ArticleResolveURLResponse {
   failed_count: number;
   results: ResolveItemResult[];
 }
+
+// ----------------------
+// --- Scraping APIs ---
+// ----------------------
+/** Per-article result returned by POST /api/v1/articles/scrape. */
+export interface ScrapeItemResult {
+  article_id: number;
+  scraping_status: ScrapingStatus;
+  scraped_content_length: number | null;
+  error: string | null;
+}
+
+/** Response body for POST /api/v1/articles/scrape (API_CONTRACTS.md). */
+export interface ArticleScrapeResponse {
+  processed_count: number;
+  success_count: number;
+  failed_count: number;
+  results: ScrapeItemResult[];
+}
