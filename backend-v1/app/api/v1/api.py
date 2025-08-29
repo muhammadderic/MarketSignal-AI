@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     ingestion,
     relevance,
     resolver,
+    scraper,
 )
 
 api_router = APIRouter()
@@ -20,3 +21,4 @@ api_router.include_router(archive.router)
 api_router.include_router(articles.router)
 api_router.include_router(relevance.router)
 api_router.include_router(resolver.router)
+api_router.include_router(scraper.router)
