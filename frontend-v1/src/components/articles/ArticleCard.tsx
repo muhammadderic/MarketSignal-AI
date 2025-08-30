@@ -1,6 +1,7 @@
 import { ExternalLink } from 'lucide-react';
 import type { Article } from '@/types/article';
 import { ScoreBadge } from './ScoreBadge';
+import { ScrapingStatusBadge } from './ScrapingStatusBadge';
 
 export interface ArticleCardProps {
   article: Article;
@@ -78,6 +79,7 @@ export function ArticleCard({
             onScore={onScoreArticle ? () => onScoreArticle(article.id) : undefined}
             isScoring={isScoring}
           />
+          <ScrapingStatusBadge status={article.scraping_status} />
         </div>
 
         {article.relevance_reasoning ? (
