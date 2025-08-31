@@ -17,6 +17,15 @@ export interface BatchToolbarProps {
   isResolving?: boolean;
   /** Last batch URL resolution summary, e.g. "Resolved 4, 1 failed of 5". */
   resolveSummary?: string | null;
+  /** True while the batch scraping mutation is in flight (NFR-008). */
+  isScraping?: boolean;
+  /** Last batch scraping summary, e.g. "Scraped 3, 1 failed of 4". */
+  scrapeSummary?: string | null;
+  /**
+   * When set, the Scrape button is disabled and this string is surfaced via
+   * `title` and `aria-describedby` (R-001: all selected must have `resolved_url`).
+   */
+  scrapeDisabledReason?: string | null;
 }
 
 export function BatchToolbar({
@@ -31,6 +40,9 @@ export function BatchToolbar({
   scoreSummary,
   isResolving,
   resolveSummary,
+  isScraping,
+  scrapeSummary,
+  scrapeDisabledReason,
 }: BatchToolbarProps) {
   const selectAllRef = useRef<HTMLInputElement>(null);
   const visibleIds = visibleArticles.map((a) => a.id);
@@ -116,12 +128,33 @@ export function BatchToolbar({
         {/* === SCRAPING ARTICLES === */}
         <button
           type="button"
-          disabled={!hasSelection}
+          disabled={!hasSelection || isScraping || Boolean(scrapeDisabledReason)}
+          title={scrapeDisabledReason ?? undefined}
+          aria-describedby={scrapeDisabledReason ? 'scrape-disabled-reason' : undefined}
           onClick={() => onScrapeArticles?.(selectedArray)}
           className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Scrape Articles
+          {isScraping ? 'Scraping…' : 'Scrape Articles'}
         </button>
+        {scrapeDisabledReason ? (
+          <span
+            id="scrape-disabled-reason"
+            className="self-center text-xs text-amber-700"
+            role="status"
+            data-testid="scrape-disabled-reason"
+          >
+            {scrapeDisabledReason}
+          </span>
+        ) : null}
+        {scrapeSummary ? (
+          <span
+            className="self-center text-xs text-slate-600"
+            role="status"
+            data-testid="scrape-summary"
+          >
+            {scrapeSummary}
+          </span>
+        ) : null}
       </div>
     </div>
   );
