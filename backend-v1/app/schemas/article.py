@@ -40,3 +40,35 @@ class ArticleListResponse(BaseModel):
     limit: int = Field(..., ge=1, description="Applied page size.")
     offset: int = Field(..., ge=0, description="Applied pagination offset.")
     items: list[ArticleSummaryResponse]
+
+
+class ArticleContentUpdate(BaseModel):
+    """Request body for ``PUT /api/v1/articles/{id}/content``.
+
+    ``scraped_content`` must be a non-empty string; whitespace-only input is
+    rejected by the endpoint (R-002). Field-level validation is intentionally
+    minimal to keep the HTTP 400 error contract consistent with other
+    endpoints (e.g. ``resolver`` empty-``article_ids`` handling).
+    """
+
+    scraped_content: str = Field(
+        ...,
+        description="User-edited plain-text article body content.",
+    )
+
+
+class ArticleContentUpdateResponse(BaseModel):
+    """Response for ``PUT /api/v1/articles/{id}/content``.
+
+    Mirrors the payload shape in ``API_CONTRACTS.md`` §Update Scraped Article
+    Content.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    scraped_content: str
+    scraping_status: ScrapingStatus
+    workflow_state: WorkflowState
+    updated_at: datetime
