@@ -5,8 +5,9 @@ import { useUIStore } from '@/stores/useUIStore';
 import { ArticleCard } from '@/components/articles/ArticleCard';
 import { BatchToolbar } from '@/components/articles/BatchToolbar';
 import { useScoreRelevance } from '@/hooks/useScoreRelevance';
-import type { ArticleBatchScoreResponse, ArticleResolveURLResponse } from '@/types/article';
+import type { ArticleBatchScoreResponse, ArticleResolveURLResponse, ArticleScrapeResponse } from '@/types/article';
 import { useResolveURLs } from '@/hooks/useResolveURLs';
+import { useScrapeArticles } from '@/hooks/useScrapeArticles';
 
 const PAGE_SIZE = 50;
 
@@ -115,6 +116,34 @@ function ArticleListBody({ date }: ArticleListBodyProps) {
     });
   };
 
+  // === SCRAPING ARTICLES ===
+  const scrapeMutation = useScrapeArticles();
+  const [lastScrapeSummary, setLastScrapeSummary] = useState<string | null>(null);
+
+  const handleScrapeArticles = (ids: number[]) => {
+    if (ids.length === 0) return;
+    setLastScrapeSummary(null);
+    scrapeMutation.mutate(ids, {
+      onSuccess: (res: ArticleScrapeResponse) => {
+        setLastScrapeSummary(
+          `Scraped ${res.success_count}, ${res.failed_count} failed of ${res.processed_count}`,
+        );
+      },
+      onError: (err: Error) => {
+        setLastScrapeSummary(`Scraping failed: ${err.message}`);
+      },
+    });
+  };
+
+  // R-001 UX: disable scrape when any selected article lacks a resolved URL.
+  const selectedArticlesLackingResolvedUrl = items.filter(
+    (a) => selectedIds.has(a.id) && a.resolved_url === null,
+  );
+  const scrapeDisabledReason =
+    selectedArticlesLackingResolvedUrl.length > 0
+      ? `${selectedArticlesLackingResolvedUrl.length} selected article(s) have no resolved URL — resolve URLs first.`
+      : null;
+
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
@@ -137,6 +166,10 @@ function ArticleListBody({ date }: ArticleListBodyProps) {
         onResolveUrls={handleResolveUrls}
         isResolving={resolveMutation.isPending}
         resolveSummary={lastResolveSummary}
+        onScrapeArticles={handleScrapeArticles}
+        isScraping={scrapeMutation.isPending}
+        scrapeSummary={lastScrapeSummary}
+        scrapeDisabledReason={scrapeDisabledReason}
       />
 
       {isError ? (
