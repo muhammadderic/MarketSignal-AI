@@ -442,5 +442,54 @@ class ArticleRepository:
             )
         await db.flush()
 
+    async def update_scraped_content(
+        self,
+        db: AsyncSession,
+        article_id: int,
+        content: str,
+    ) -> Article | None:
+        """Overwrite ``scraped_content`` and recover the workflow state.
+
+        Manual-edit semantics (``API_CONTRACTS.md`` §Update Scraped Article
+        Content, ``DATA_MODEL.md`` §Lifecycle Stage 6, FEAT-007 R-001):
+
+        * ``scraped_content`` is replaced with ``content``.
+        * ``scraping_status`` is set to ``SUCCESS``.
+        * ``scraping_error`` is cleared (``None``).
+        * ``workflow_state`` is set to ``Scraped`` unconditionally so the
+          operator can re-run financial extraction after a manual repair.
+        * ``scraped_at`` is set to the current UTC time only when it is
+          currently ``null``; an existing successful-scrape timestamp is
+          preserved to distinguish human-supplied content from scraper output.
+        * ``updated_at`` is refreshed.
+
+        Args:
+            db: Active async session.
+            article_id: Primary key of the target article.
+            content: Non-empty plain-text content to persist. Whitespace-only
+                input is rejected by the endpoint layer before this method is
+                invoked.
+
+        Returns:
+            The refreshed :class:`Article` instance, or ``None`` if the
+            article does not exist.
+        """
+        article = await db.get(Article, article_id)
+        if article is None:
+            return None
+
+        now = datetime.now(UTC)
+        article.scraped_content = content
+        article.scraping_status = ScrapingStatus.SUCCESS.value
+        article.scraping_error = None
+        article.workflow_state = WorkflowState.SCRAPED.value
+        if article.scraped_at is None:
+            article.scraped_at = now
+        article.updated_at = now
+
+        await db.flush()
+        await db.refresh(article)
+        return article
+
 
 __all__ = ["ArticleRepository"]
