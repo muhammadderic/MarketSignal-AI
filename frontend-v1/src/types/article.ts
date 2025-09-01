@@ -107,3 +107,36 @@ export interface ArticleScrapeResponse {
   failed_count: number;
   results: ScrapeItemResult[];
 }
+
+// ------------------------------
+// --- Article Detail Contract ---
+// ------------------------------
+/**
+ * Full article body returned by `GET /api/v1/articles/{id}`
+ * (API_CONTRACTS.md §Endpoint: Get Article Detail). Includes heavy text
+ * columns excluded from the list response.
+ */
+export interface ArticleDetail extends Article {
+  url_hash: string;
+  scraped_content: string | null;
+  scraping_error: string | null;
+  financial_insight: string | null;
+  scraped_at: string | null;
+  insight_extracted_at: string | null;
+}
+
+// --------------------------------------
+// --- Content Update PUT contract ---
+// --------------------------------------
+/**
+ * Response body for `PUT /api/v1/articles/{id}/content`
+ * (API_CONTRACTS.md §Endpoint: Update Scraped Article Content).
+ */
+export interface ArticleContentUpdateResponse {
+  id: number;
+  title: string;
+  scraped_content: string;
+  scraping_status: ScrapingStatus;
+  workflow_state: WorkflowState;
+  updated_at: string;
+}
