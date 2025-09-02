@@ -2,6 +2,8 @@ import { apiClient } from '@/api/apiClient';
 import type { 
   Article, 
   ArticleBatchScoreResponse, 
+  ArticleContentUpdateResponse, 
+  ArticleDetail, 
   ArticleListResponse, 
   ArticleResolveURLResponse, 
   ArticleScrapeResponse
@@ -83,6 +85,33 @@ export async function scrapeArticles(
   const { data } = await apiClient.post<ArticleScrapeResponse>(
     '/articles/scrape',
     { article_ids: articleIds },
+  );
+  return data;
+}
+
+/**
+ * Fetch a single article's full detail including heavy text columns.
+ * Consumes `GET /api/v1/articles/{id}` (API_CONTRACTS.md §Endpoint: Get Article Detail).
+ */
+export async function fetchArticleById(id: number): Promise<ArticleDetail> {
+  const { data } = await apiClient.get<ArticleDetail>(`/articles/${id}`);
+  return data;
+}
+
+/**
+ * Overwrite an article's `scraped_content` with manually edited text.
+ * Consumes `PUT /api/v1/articles/{id}/content` (API_CONTRACTS.md §Endpoint: Update Scraped Article Content).
+ *
+ * On success the backend transitions `scraping_status -> 'SUCCESS'`, clears
+ * `scraping_error`, and advances `workflow_state -> 'Scraped'`.
+ */
+export async function updateArticleContent(
+  id: number,
+  scrapedContent: string,
+): Promise<ArticleContentUpdateResponse> {
+  const { data } = await apiClient.put<ArticleContentUpdateResponse>(
+    `/articles/${id}/content`,
+    { scraped_content: scrapedContent },
   );
   return data;
 }
