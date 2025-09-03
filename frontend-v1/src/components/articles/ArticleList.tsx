@@ -5,9 +5,10 @@ import { useUIStore } from '@/stores/useUIStore';
 import { ArticleCard } from '@/components/articles/ArticleCard';
 import { BatchToolbar } from '@/components/articles/BatchToolbar';
 import { useScoreRelevance } from '@/hooks/useScoreRelevance';
-import type { ArticleBatchScoreResponse, ArticleResolveURLResponse, ArticleScrapeResponse } from '@/types/article';
+import type { Article, ArticleBatchScoreResponse, ArticleResolveURLResponse, ArticleScrapeResponse } from '@/types/article';
 import { useResolveURLs } from '@/hooks/useResolveURLs';
 import { useScrapeArticles } from '@/hooks/useScrapeArticles';
+import { ScrapedContentModal } from './ScrapedContentModal';
 
 const PAGE_SIZE = 50;
 
@@ -135,6 +136,12 @@ function ArticleListBody({ date }: ArticleListBodyProps) {
     });
   };
 
+  // === CONTENT EDITOR (FEAT-007) ===
+  const [editingArticleId, setEditingArticleId] = useState<number | null>(null);
+  const handleEditContent = (article: Article) => {
+    setEditingArticleId(article.id);
+  };
+
   // R-001 UX: disable scrape when any selected article lacks a resolved URL.
   const selectedArticlesLackingResolvedUrl = items.filter(
     (a) => selectedIds.has(a.id) && a.resolved_url === null,
@@ -208,6 +215,7 @@ function ArticleListBody({ date }: ArticleListBodyProps) {
               onToggleSelection={toggleArticleSelection}
               onScoreArticle={handleScoreSingle}
               isScoring={scoreMutation.isPending && scoreMutation.variables?.includes(article.id)}
+              onEditContent={handleEditContent}
             />
           ))}
         </div>
@@ -234,6 +242,11 @@ function ArticleListBody({ date }: ArticleListBodyProps) {
           Next
         </button>
       </div>
+
+      <ScrapedContentModal
+        articleId={editingArticleId}
+        onClose={() => setEditingArticleId(null)}
+      />
     </section>
   );
 }
