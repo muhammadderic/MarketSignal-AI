@@ -11,6 +11,8 @@ export interface ArticleCardProps {
   onScoreArticle?: (id: number) => void;
   /** True while a scoring mutation is pending for this article. */
   isScoring?: boolean;
+  /** Open the content editor modal for this article (FEAT-007). */
+  onEditContent?: (article: Article) => void;
 }
 
 function formatPublishedAt(iso: string): string {
@@ -19,12 +21,26 @@ function formatPublishedAt(iso: string): string {
   return `${parsed.toISOString().slice(0, 10)} ${parsed.toISOString().slice(11, 16)} UTC`;
 }
 
+/**
+ * FEAT-007 §8: expose the editor trigger for articles that have been scraped
+ * successfully, failed to scrape, or otherwise reached the `Scraped` workflow
+ * state — i.e. any article whose content is human-editable.
+ */
+function showEditorTrigger(article: Article): boolean {
+  return (
+    article.scraping_status === 'SUCCESS' ||
+    article.scraping_status === 'FAILED' ||
+    article.workflow_state === 'Scraped'
+  );
+}
+
 export function ArticleCard({
   article,
   isSelected,
   onToggleSelection,
   onScoreArticle,
   isScoring,
+  onEditContent,
 }: ArticleCardProps) {
   const linkUrl = article.resolved_url ?? article.google_url;
   const linkLabel = article.resolved_url ? 'Publisher URL' : 'Google News URL';
@@ -80,6 +96,15 @@ export function ArticleCard({
             isScoring={isScoring}
           />
           <ScrapingStatusBadge status={article.scraping_status} />
+          {onEditContent && showEditorTrigger(article) ? (
+            <button
+              type="button"
+              onClick={() => onEditContent(article)}
+              className="rounded border border-slate-300 bg-white px-2 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            >
+              Review / Edit Content
+            </button>
+          ) : null}
         </div>
 
         {article.relevance_reasoning ? (
