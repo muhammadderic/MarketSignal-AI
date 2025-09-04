@@ -21,6 +21,7 @@ from app.db.repositories.article_repository import ArticleRepository
 from app.schemas.article import (
     ArticleContentUpdate,
     ArticleContentUpdateResponse,
+    ArticleDetailResponse,
     ArticleListResponse,
     ArticleSummaryResponse,
 )
@@ -36,6 +37,45 @@ MAX_LIMIT = 200
 def get_article_repository() -> ArticleRepository:
     """Provide an :class:`ArticleRepository` instance."""
     return ArticleRepository()
+
+
+@router.get(
+    "/articles/{article_id}",
+    response_model=ArticleDetailResponse,
+    summary="Get full article detail including scraped content and insight",
+)
+async def get_article_detail(
+    article_id: int = Path(
+        ...,
+        ge=1,
+        description="Target article primary key ID.",
+    ),
+    db: AsyncSession = Depends(get_async_db),
+    repository: ArticleRepository = Depends(get_article_repository),
+) -> ArticleDetailResponse:
+    """Retrieve full article detail by primary key.
+
+    Returns all columns including heavy text fields (``scraped_content``,
+    ``financial_insight``) per ``API_CONTRACTS.md`` §Get Article Detail.
+
+    Args:
+        article_id: Target article ID (path parameter).
+        db: Injected async database session.
+        repository: Injected article repository.
+
+    Returns:
+        :class:`ArticleDetailResponse`.
+
+    Raises:
+        NotFoundError: When ``article_id`` does not exist (HTTP 404).
+    """
+    article = await repository.get_by_id(db, article_id)
+    if article is None:
+        raise NotFoundError(
+            f"Article ID {article_id} not found.",
+            context={"article_id": article_id},
+        )
+    return ArticleDetailResponse.model_validate(article)
 
 
 @router.get(
