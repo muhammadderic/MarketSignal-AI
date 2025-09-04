@@ -26,6 +26,27 @@ class ArticleRepository:
     # ------------
     # --- READ ---
     # ------------
+    async def get_by_id(
+        self,
+        db: AsyncSession,
+        article_id: int,
+    ) -> Article | None:
+        """Fetch a single article row by primary key.
+
+        Loads all columns, including the heavy text columns
+        (``scraped_content``, ``financial_insight``) needed for the article
+        detail endpoint. List endpoints should continue using
+        :meth:`list_articles` which defers those columns.
+
+        Args:
+            db: Active async session.
+            article_id: Primary key of the target article.
+
+        Returns:
+            The matching :class:`Article` or ``None`` if not found.
+        """
+        return await db.get(Article, article_id)
+        
     async def get_by_ids(
         self,
         db: AsyncSession,
