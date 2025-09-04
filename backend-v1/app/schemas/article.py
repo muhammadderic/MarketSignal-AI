@@ -42,6 +42,37 @@ class ArticleListResponse(BaseModel):
     items: list[ArticleSummaryResponse]
 
 
+class ArticleDetailResponse(BaseModel):
+    """Full article detail for ``GET /api/v1/articles/{id}``.
+
+    Includes heavy text columns (``scraped_content``, ``financial_insight``)
+    which are excluded from :class:`ArticleSummaryResponse` per
+    ``API_CONTRACTS.md`` §Get Article Detail.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    source_name: str | None
+    published_at: datetime
+    published_at_date: date
+    google_url: str
+    resolved_url: str | None
+    url_hash: str
+    relevance_score: int | None
+    relevance_reasoning: str | None
+    scraped_content: str | None
+    scraping_status: ScrapingStatus
+    scraping_error: str | None
+    financial_insight: str | None
+    workflow_state: WorkflowState
+    created_at: datetime
+    updated_at: datetime
+    scraped_at: datetime | None
+    insight_extracted_at: datetime | None
+
+
 class ArticleContentUpdate(BaseModel):
     """Request body for ``PUT /api/v1/articles/{id}/content``.
 
