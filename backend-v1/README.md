@@ -1,5 +1,7 @@
 # Market Signal AI API
 
+version: 1.2.0
+
 FastAPI asynchronous backend for MarketSignal AI.
 
 ## Prerequisites
