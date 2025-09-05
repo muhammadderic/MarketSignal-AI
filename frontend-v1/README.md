@@ -1,5 +1,7 @@
 # MarketSignal AI — Frontend
 
+version: 1.2.0
+
 React 19 + TypeScript single-page application for MarketSignal AI.
 
 ## Prerequisites
